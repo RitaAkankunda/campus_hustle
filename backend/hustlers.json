@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1756124023742,
+    "name": " ",
+    "university": "Makerere University",
+    "category": "",
+    "location": "Mary Stuart Hall",
+    "bio": "",
+    "profileImage": "",
+    "whatsapp": "",
+    "rating": 5,
+    "reviewCount": 0,
+    "portfolio": [],
+    "featured": false,
+    "joinedDate": "2025-08-25T12:13:39.458Z",
+    "services": [],
+    "pricing": "",
+    "products": []
+  },
+  {
+    "id": 1756124051715,
+    "name": " ",
+    "university": "Makerere University",
+    "category": "",
+    "location": "Mary Stuart Hall",
+    "bio": "",
+    "profileImage": "",
+    "whatsapp": "",
+    "rating": 5,
+    "reviewCount": 0,
+    "portfolio": [],
+    "featured": false,
+    "joinedDate": "2025-08-25T12:14:11.687Z",
+    "services": [],
+    "pricing": "",
+    "products": []
+  }
+]

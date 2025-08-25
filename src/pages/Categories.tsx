@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { categories, hustlers } from '../data/mockData';
+import { categories, hustlers } from '../data/cleanMockData';
 
 const Categories: React.FC = () => {
   return (

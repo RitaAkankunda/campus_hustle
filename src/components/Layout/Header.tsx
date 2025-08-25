@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import usePWAInstallPrompt from '../../hooks/usePWAInstallPrompt';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Star, Users } from 'lucide-react';
+import { Menu, X, Star } from 'lucide-react';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,9 +9,10 @@ const Header: React.FC = () => {
 
   const navigation = [
     { name: 'Home', href: '/' },
-    { name: 'Browse Hustlers', href: '/hustlers' },
-    { name: 'Categories', href: '/categories' },
+    { name: 'MSH Entrepreneurs', href: '/hustlers' },
+    { name: 'Services', href: '/categories' },
     { name: 'Blog', href: '/blog' },
+    { name: 'Messages', href: '/messages' },
     { name: 'About', href: '/about' }
   ];
 
@@ -18,18 +20,23 @@ const Header: React.FC = () => {
     return location.pathname === path;
   };
 
+  const { isSupported, promptInstall } = usePWAInstallPrompt();
+
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
+            <div className="bg-gradient-to-r from-pink-600 to-purple-600 p-2 rounded-lg">
               <Star className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              CampusHustle
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                MSH Connect
+              </span>
+              <span className="text-xs text-gray-500">Mary Stuart Hall</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -52,11 +59,26 @@ const Header: React.FC = () => {
           {/* CTA Button */}
           <div className="hidden md:flex items-center space-x-4">
             <Link
-              to="/join"
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium"
+              to="/login"
+              className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              Join as Hustler
+              Sign In
             </Link>
+            <Link
+              to="/signup"
+              className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium"
+            >
+              Join the Community
+            </Link>
+            {isSupported && (
+              <button
+                onClick={promptInstall}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-300 font-medium"
+                title="Install as App"
+              >
+                Install App
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -87,11 +109,18 @@ const Header: React.FC = () => {
                 </Link>
               ))}
               <Link
-                to="/join"
+                to="/login"
                 onClick={() => setIsOpen(false)}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium text-center"
+                className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors text-center"
               >
-                Join as Hustler
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                onClick={() => setIsOpen(false)}
+                className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium text-center"
+              >
+                Join the Community
               </Link>
             </div>
           </div>

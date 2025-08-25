@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, User, ArrowRight } from 'lucide-react';
-import { blogPosts } from '../data/mockData';
+import { blogPosts } from '../data/cleanMockData';
 
 const Blog: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Student Entrepreneur Blog</h1>
@@ -17,7 +17,7 @@ const Blog: React.FC = () => {
 
         {/* Featured Post */}
         <motion.div
-          className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12"
+          className="bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-lg overflow-hidden mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -29,7 +29,7 @@ const Blog: React.FC = () => {
                 alt={blogPosts[0].title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                 Featured
               </div>
             </div>
@@ -53,7 +53,7 @@ const Blog: React.FC = () => {
                 </div>
                 <Link
                   to={`/blog/${blogPosts[0].id}`}
-                  className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Read More <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
@@ -67,7 +67,7 @@ const Blog: React.FC = () => {
           {blogPosts.slice(1).map((post, index) => (
             <motion.article
               key={post.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className="bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: (index + 1) * 0.1 }}
@@ -98,7 +98,7 @@ const Blog: React.FC = () => {
                 </div>
                 <Link
                   to={`/blog/${post.id}`}
-                  className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Read More <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
@@ -109,13 +109,13 @@ const Blog: React.FC = () => {
 
         {/* Newsletter Signup */}
         <motion.div
-          className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 mt-16 text-center text-white"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mt-16 text-center text-white"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           <h3 className="text-2xl font-bold mb-4">Stay Updated</h3>
-          <p className="text-purple-100 mb-6 max-w-2xl mx-auto">
+          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
             Get the latest tips, success stories, and insights from Uganda's top student entrepreneurs delivered to your inbox.
           </p>
           <div className="max-w-md mx-auto flex space-x-4">
@@ -124,7 +124,7 @@ const Blog: React.FC = () => {
               placeholder="Enter your email"
               className="flex-1 px-4 py-3 rounded-lg text-gray-900"
             />
-            <button className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
               Subscribe
             </button>
           </div>

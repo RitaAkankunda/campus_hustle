@@ -1,38 +1,73 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import HustlerCard from '../components/Hustlers/HustlerCard';
 import SearchFilters from '../components/Hustlers/SearchFilters';
-import { hustlers } from '../data/mockData';
+// import { hustlers } from '../data/cleanMockData';
+
 
 const Hustlers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedUniversity, setSelectedUniversity] = useState('');
+  const [hustlers, setHustlers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHustlers = async () => {
+      try {
+        const res = await fetch('http://localhost:4000/api/hustlers');
+        const data = await res.json();
+        setHustlers(data);
+      } catch (err) {
+        setHustlers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHustlers();
+  }, []);
 
   const filteredHustlers = useMemo(() => {
-    return hustlers.filter((hustler) => {
-      const matchesSearch = hustler.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          hustler.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          hustler.services.some(service => service.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+    return hustlers.filter((hustler: any) => {
+      const matchesSearch = hustler.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hustler.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (hustler.services || []).some((service: string) => service.toLowerCase().includes(searchQuery.toLowerCase()));
+
       const matchesCategory = !selectedCategory || hustler.category === selectedCategory;
       const matchesLocation = !selectedLocation || hustler.location === selectedLocation;
       const matchesUniversity = !selectedUniversity || hustler.university === selectedUniversity;
 
       return matchesSearch && matchesCategory && matchesLocation && matchesUniversity;
     });
-  }, [searchQuery, selectedCategory, selectedLocation, selectedUniversity]);
+  }, [hustlers, searchQuery, selectedCategory, selectedLocation, selectedUniversity]);
+
+  // Featured hustlers (promotions)
+  const featuredHustlers = hustlers.filter((h: any) => h.featured);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Browse All Hustlers</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Mary Stuart Hall Entrepreneurs 🌸</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover talented student entrepreneurs across Uganda's top universities
+            Discover amazing talented ladies in Mary Stuart Hall offering exceptional services
           </p>
         </div>
+
+        {/* Featured Hustlers Carousel */}
+        {featuredHustlers.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-purple-700 mb-4">🌟 Featured Hustlers</h2>
+            <div className="flex space-x-6 overflow-x-auto pb-2">
+              {featuredHustlers.map(hustler => (
+                <div key={hustler.id} className="min-w-[320px] max-w-xs">
+                  <HustlerCard hustler={hustler} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <SearchFilters
           searchQuery={searchQuery}
@@ -47,7 +82,7 @@ const Hustlers: React.FC = () => {
 
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-semibold text-gray-900">
-            {filteredHustlers.length} Hustlers Found
+            {filteredHustlers.length} MSH Entrepreneurs Found
           </h2>
         </div>
 

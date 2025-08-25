@@ -1,97 +1,117 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, MapPin, Phone, ArrowRight } from 'lucide-react';
-import { hustlers } from '../../data/mockData';
+import { Star, MapPin, Phone, Crown, Sparkles, Heart } from 'lucide-react';
+import { hustlers } from '../../data/cleanMockData';
 
 const FeaturedHustlers: React.FC = () => {
   const featuredHustlers = hustlers.filter(hustler => hustler.featured).slice(0, 3);
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Featured Hustlers of the Week
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-6">
+            <Crown className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            MSH Entrepreneurs of the Week 🌸
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet our top-rated student entrepreneurs who are making waves on campus
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Meet the amazing entrepreneurs making waves in Mary Stuart Hall this week
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredHustlers.map((hustler) => (
-            <div key={hustler.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="relative">
-                <img
-                  src={hustler.profileImage}
-                  alt={hustler.name}
-                  className="w-full h-64 object-cover"
-                />
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  Featured
-                </div>
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-1">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-semibold">{hustler.rating}</span>
-                </div>
-              </div>
+          {featuredHustlers.map((hustler, index) => (
+            <div key={hustler.id} className="group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 transform hover:-translate-y-2">
+              {/* Gradient overlay on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-600/0 group-hover:from-blue-500/10 group-hover:to-purple-600/10 transition-all duration-500 z-10"></div>
               
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xl font-bold text-gray-900">{hustler.name}</h3>
-                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="relative z-20">
+                <div className="relative">
+                  <img
+                    src={hustler.profileImage}
+                    alt={hustler.name}
+                    className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  
+                  {/* Featured badge */}
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center animate-pulse">
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      Featured
+                    </div>
+                  </div>
+                  
+                  {/* Rating badge */}
+                  <div className="absolute bottom-4 left-4 flex items-center bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+                    <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
+                    <span className="text-sm font-bold text-gray-800">{hustler.rating}</span>
+                    <span className="text-xs text-gray-500 ml-1">({hustler.reviewCount})</span>
+                  </div>
+
+                  {/* Position indicator */}
+                  <div className="absolute top-4 left-4">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      #{index + 1}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">{hustler.name}</h3>
+                  </div>
+
+                  <div className="inline-flex items-center text-sm text-blue-600 bg-blue-100 px-3 py-1 rounded-full mb-4 font-medium">
+                    <Heart className="h-4 w-4 mr-1" />
                     {hustler.category}
-                  </span>
-                </div>
-                
-                <div className="flex items-center text-gray-600 mb-2">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  <span className="text-sm">{hustler.location}, {hustler.university}</span>
-                </div>
-                
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {hustler.bio}
-                </p>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-sm text-gray-500">
-                    {hustler.reviewCount} reviews
                   </div>
-                  <div className="text-lg font-bold text-purple-600">
-                    {hustler.pricing}
+
+                  <div className="flex items-center text-gray-500 text-sm mb-4">
+                    <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                    <span>{hustler.location} • {hustler.university}</span>
                   </div>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <Link
-                    to={`/hustler/${hustler.id}`}
-                    className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-center text-sm font-medium"
-                  >
-                    View Profile
-                  </Link>
-                  <a
-                    href={`https://wa.me/${hustler.whatsapp.replace('+', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-center text-sm font-medium flex items-center justify-center space-x-1"
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span>WhatsApp</span>
-                  </a>
+
+                  <p className="text-gray-600 mb-6 leading-relaxed">{hustler.bio}</p>
+
+                  {/* Services preview */}
+                  <div className="mb-6">
+                    <div className="flex flex-wrap gap-2">
+                      {hustler.services.slice(0, 2).map((service, idx) => (
+                        <span key={idx} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                          {service}
+                        </span>
+                      ))}
+                      {hustler.services.length > 2 && (
+                        <span className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-purple-600 px-3 py-1 rounded-full font-medium">
+                          +{hustler.services.length - 2} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3">
+                    <Link
+                      to={`/hustler/${hustler.id}`}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold text-center hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                      View Profile
+                    </Link>
+                    <a
+                      href={`https://wa.me/${hustler.whatsapp.replace('+', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-colors duration-300 shadow-lg"
+                    >
+                      <Phone className="h-5 w-5" />
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link
-            to="/hustlers"
-            className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-semibold"
-          >
-            Browse All Hustlers
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
         </div>
       </div>
     </section>
