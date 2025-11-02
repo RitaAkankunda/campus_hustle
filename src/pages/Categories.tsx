@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { categories } from '../data/cleanMockData';
 import { ArrowRight, Users, Sparkles, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getApiUrl } from '../utils/api';
 
 const Categories: React.FC = () => {
   const [hustlers, setHustlers] = useState<any[]>([]);
@@ -12,7 +13,7 @@ const Categories: React.FC = () => {
   useEffect(() => {
     const fetchHustlers = async () => {
       try {
-        const res = await fetch('http://localhost:4000/api/hustlers');
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         setHustlers(data);
       } catch (err) {

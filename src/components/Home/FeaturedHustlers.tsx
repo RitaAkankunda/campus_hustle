@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MapPin, Phone, Crown, Sparkles, Heart } from 'lucide-react';
+import { getApiUrl } from '../../utils/api';
 
 const FeaturedHustlers: React.FC = () => {
   const [featuredHustlers, setFeaturedHustlers] = useState<any[]>([]);
@@ -9,7 +10,7 @@ const FeaturedHustlers: React.FC = () => {
   useEffect(() => {
     const fetchFeaturedHustlers = async () => {
       try {
-        const res = await fetch('http://localhost:4000/api/hustlers');
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         const featured = data.filter((h: any) => h.featured).slice(0, 3);
         setFeaturedHustlers(featured);

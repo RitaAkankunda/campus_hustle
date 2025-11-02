@@ -4,6 +4,7 @@ import { User, Camera, ArrowLeft, ArrowRight, Sparkles, Star, Heart, Zap, CheckC
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { useNotifications } from '../components/Notification';
+import { getApiUrl } from '../utils/api';
 
 interface Product {
   id: string;
@@ -71,8 +72,8 @@ const Signup: React.FC = () => {
   };
 
   const addQuickProduct = () => {
-    const newProduct: Product = {
-      id: Date.now().toString(),
+      const newProduct: Product = {
+        id: Date.now().toString(),
       name: '',
       description: '',
       price: '',
@@ -157,7 +158,7 @@ const Signup: React.FC = () => {
     };
 
     try {
-      const res = await fetch('http://localhost:4000/api/hustlers', {
+      const res = await fetch(getApiUrl('/api/hustlers'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(hustler),
@@ -237,13 +238,13 @@ const Signup: React.FC = () => {
                     }`}
                   >
                     {currentStep > step ? <CheckCircle className="h-6 w-6" /> : step}
-                  </div>
+                </div>
                   <span className="text-xs text-gray-600 mt-2 text-center hidden sm:block">
                     {step === 1 && 'Your Info'}
                     {step === 2 && 'Your Business'}
                     {step === 3 && 'Add Products'}
-                  </span>
-                </div>
+                </span>
+              </div>
                 {step < 3 && (
                   <div
                     className={`h-1 flex-1 mx-2 rounded-full transition-all duration-300 ${
@@ -263,10 +264,10 @@ const Signup: React.FC = () => {
           <AnimatePresence mode="wait">
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
-              <motion.div
+        <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20"
               >
@@ -278,31 +279,31 @@ const Signup: React.FC = () => {
                   <p className="text-gray-600">Just the basics to get you started</p>
                 </div>
 
-                <div className="space-y-6">
+              <div className="space-y-6">
                   {/* Profile Picture */}
                   <div className="flex flex-col items-center">
                     <div className="relative mb-4">
                       <div className="w-28 h-28 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden shadow-lg">
-                        {formData.profilePicture ? (
-                          <img
-                            src={formData.profilePicture}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-14 h-14 text-white" />
-                        )}
-                      </div>
-                      <label className="absolute bottom-0 right-0 bg-white rounded-full p-3 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                        <Camera className="w-5 h-5 text-gray-600" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
+                      {formData.profilePicture ? (
+                        <img
+                          src={formData.profilePicture}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
                         />
-                      </label>
+                      ) : (
+                          <User className="w-14 h-14 text-white" />
+                      )}
                     </div>
+                      <label className="absolute bottom-0 right-0 bg-white rounded-full p-3 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <Camera className="w-5 h-5 text-gray-600" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                          onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                     <p className="text-sm text-gray-500">Tap to add your photo</p>
                   </div>
 
@@ -320,31 +321,31 @@ const Signup: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                  <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
                         className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         placeholder="your.email@students.mak.ac.ug"
-                        required
-                      />
-                    </div>
+                      required
+                    />
+                  </div>
 
-                    <div>
+                  <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp *</label>
-                      <input
-                        type="tel"
+                    <input
+                      type="tel"
                         name="whatsapp"
                         value={formData.whatsapp}
-                        onChange={handleInputChange}
+                      onChange={handleInputChange}
                         className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         placeholder="07XX XXX XXX"
-                        required
-                      />
-                    </div>
+                      required
+                    />
+                  </div>
                   </div>
 
                   <div>
@@ -417,36 +418,36 @@ const Signup: React.FC = () => {
                           <div className="text-sm font-semibold">{category.name}</div>
                         </button>
                       ))}
-                    </div>
                   </div>
+                </div>
 
-                  <div>
+                <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Describe Your Business *
                     </label>
-                    <textarea
+                  <textarea
                       name="bio"
                       value={formData.bio}
-                      onChange={handleInputChange}
-                      rows={4}
+                    onChange={handleInputChange}
+                    rows={4}
                       className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
                       placeholder="Tell MSH students about what you offer and what makes you special..."
-                      required
-                    />
-                  </div>
+                    required
+                  />
+                </div>
 
-                  <div>
+                <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range (Optional)</label>
-                    <input
-                      type="text"
-                      name="priceRange"
-                      value={formData.priceRange}
-                      onChange={handleInputChange}
+                  <input
+                    type="text"
+                    name="priceRange"
+                    value={formData.priceRange}
+                    onChange={handleInputChange}
                       className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       placeholder="e.g., From 15,000 UGX or 5,000 - 50,000 UGX"
-                    />
-                  </div>
+                  />
                 </div>
+              </div>
 
                 <div className="flex justify-between mt-8">
                   <button
@@ -555,10 +556,10 @@ const Signup: React.FC = () => {
                                         }`}
                                       />
                                     ))}
-                                  </div>
+                      </div>
                                 </>
                               )}
-                            </div>
+                    </div>
 
                             {/* Image Thumbnail Grid */}
                             <div className="grid grid-cols-4 gap-2">
@@ -574,34 +575,34 @@ const Signup: React.FC = () => {
                                       alt={`Product ${index + 1} image ${imgIndex + 1}`}
                                       className="w-full h-full object-cover cursor-pointer"
                                       onClick={() => setProductImageIndex(prev => ({ ...prev, [product.id]: imgIndex }))}
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
+                      />
+                    </div>
+                            <button
+                              type="button"
                                     onClick={() => removeProductImage(product.id, imgIndex)}
                                     className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
                                     title="Remove image"
-                                  >
+                            >
                                     <X className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
-                              
+                            </button>
+                          </div>
+                        ))}
+
                               {/* Add More Images Button */}
                               <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
                                 <div className="text-center">
                                   <Upload className="h-5 w-5 text-gray-400 mx-auto mb-1" />
                                   <span className="text-xs text-gray-500">Add</span>
                                 </div>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
                                   onChange={(e) => handleProductImageUpload(product.id, e)}
-                                />
-                              </label>
-                            </div>
-                          </div>
+                          />
+                        </label>
+                      </div>
+                    </div>
                         ) : (
                           <div className="mb-3">
                             <label className="cursor-pointer inline-flex items-center px-4 py-3 border-2 border-dashed border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium w-full justify-center">
@@ -615,8 +616,8 @@ const Signup: React.FC = () => {
                               />
                             </label>
                             <p className="text-xs text-gray-500 mt-2 text-center">Or paste image URL below</p>
-                          </div>
-                        )}
+              </div>
+            )}
 
                         {/* URL Input for Images */}
                         <input
@@ -649,7 +650,7 @@ const Signup: React.FC = () => {
                           }}
                         />
                         <p className="text-xs text-gray-500 mt-1">Press Enter or click outside to add URL</p>
-                      </div>
+                    </div>
 
                       {/* Product Details */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -685,37 +686,37 @@ const Signup: React.FC = () => {
                   >
                     + Add Product/Service
                   </button>
-                </div>
+                  </div>
 
                 {products.length === 0 && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                     <p className="text-sm text-blue-800 text-center">
                       💡 No worries! You can skip this and add products anytime from your dashboard.
                     </p>
-                  </div>
-                )}
+              </div>
+            )}
 
-                <div className="flex justify-between mt-8">
-                  <button
-                    type="button"
-                    onClick={prevStep}
+            <div className="flex justify-between mt-8">
+                <button
+                  type="button"
+                  onClick={prevStep}
                     className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
                   >
                     <ArrowLeft className="h-5 w-5" />
                     Back
-                  </button>
-                  <button
-                    type="submit"
+                </button>
+                <button
+                  type="submit"
                     className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-                  >
+                >
                     <Zap className="h-5 w-5" />
                     Join the Community!
-                  </button>
+                </button>
                 </div>
               </motion.div>
-            )}
+              )}
           </AnimatePresence>
-        </form>
+          </form>
 
         <div className="text-center mt-8">
           <p className="text-gray-600">

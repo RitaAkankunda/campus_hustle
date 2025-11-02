@@ -4,6 +4,7 @@ import { Star, MapPin, Phone, Calendar, Award, ArrowLeft, Camera, X, Upload, Che
 import { testimonials as initialTestimonials } from '../data/cleanMockData';
 import HustlerReviewForm from '../components/Hustlers/HustlerReviewForm';
 import { useNotifications } from '../components/Notification';
+import { getApiUrl } from '../utils/api';
 
 
 const HustlerProfile: React.FC = () => {
@@ -25,7 +26,7 @@ const HustlerProfile: React.FC = () => {
     const fetchHustler = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:4000/api/hustlers`);
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         const found = data.find((h: any) => String(h.id) === String(id));
         setHustler(found || null);
@@ -57,7 +58,7 @@ const HustlerProfile: React.FC = () => {
     
     try {
       // Submit review to backend
-      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}/reviews`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}/reviews`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(review)
@@ -73,7 +74,7 @@ const HustlerProfile: React.FC = () => {
       setTestimonials((prev: any[]) => [...prev, newReview]);
       
       // Refresh hustler data to get updated rating and review count
-      const hustlerRes = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`);
+      const hustlerRes = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`));
       const updatedHustler = await hustlerRes.json();
       setHustler(updatedHustler);
       
@@ -126,7 +127,7 @@ const HustlerProfile: React.FC = () => {
         profileImage: newProfileImage
       };
       
-      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
@@ -196,7 +197,7 @@ const HustlerProfile: React.FC = () => {
         return product;
       });
 
-      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -243,7 +244,7 @@ const HustlerProfile: React.FC = () => {
     setShowDeleteConfirm(false);
     try {
       if (!hustler) return;
-      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete profile');
       showSuccess('Profile Deleted', 'Your profile has been deleted successfully.');
       setTimeout(() => {

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import HustlerCard from '../components/Hustlers/HustlerCard';
 import SearchFilters from '../components/Hustlers/SearchFilters';
+import { getApiUrl } from '../utils/api';
 // import { hustlers } from '../data/cleanMockData';
 
 
@@ -19,7 +20,7 @@ const Hustlers: React.FC = () => {
   useEffect(() => {
     const fetchHustlers = async () => {
       try {
-        const res = await fetch('http://localhost:4000/api/hustlers');
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         setHustlers(data);
       } catch (err) {

@@ -6,6 +6,7 @@ import Rewards from '../components/Rewards';
 import EventCalendar from '../components/EventCalendar';
 import { Product } from '../types';
 import { useNotifications } from '../components/Notification';
+import { getApiUrl } from '../utils/api';
 
 const Dashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ const Dashboard: React.FC = () => {
     const fetchHustler = async () => {
       if (!id) return;
       try {
-        const res = await fetch(`http://localhost:4000/api/hustlers`);
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         const found = data.find((h: any) => String(h.id) === String(id));
         if (found) {
@@ -43,7 +44,7 @@ const Dashboard: React.FC = () => {
           : product
       );
 
-      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updatedProducts })
@@ -64,7 +65,7 @@ const Dashboard: React.FC = () => {
     try {
       const updatedProducts = currentHustler.products.filter((product: any) => product.id !== productId);
 
-      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updatedProducts })
@@ -93,7 +94,7 @@ const Dashboard: React.FC = () => {
     try {
       const updatedProducts = [...currentHustler.products, newProduct];
 
-      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+      const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: updatedProducts })

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import HustlerCard from '../components/Hustlers/HustlerCard';
 import { useFavorites } from '../hooks/useFavorites';
 import { useNotifications } from '../components/Notification';
+import { getApiUrl } from '../utils/api';
 
 const Favorites: React.FC = () => {
   const { favorites, clearFavorites } = useFavorites();
@@ -15,7 +16,7 @@ const Favorites: React.FC = () => {
   useEffect(() => {
     const fetchHustlers = async () => {
       try {
-        const res = await fetch('http://localhost:4000/api/hustlers');
+        const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         // Filter to only show favorited hustlers
         const favoritedHustlers = data.filter((h: any) => favorites.includes(h.id));
