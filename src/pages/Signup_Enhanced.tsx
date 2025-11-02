@@ -16,7 +16,7 @@ interface Product {
 }
 
 const Signup: React.FC = () => {
-  const { showSuccess, NotificationContainer } = useNotifications();
+  const { showSuccess } = useNotifications();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -663,7 +663,6 @@ const Signup: React.FC = () => {
           <p>Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">Sign in here</Link></p>
         </div>
       </div>
-      <NotificationContainer />
     </div>
   );
 };

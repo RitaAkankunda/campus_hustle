@@ -1,157 +1,161 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, Mail, Phone, Camera, Plus, X, ArrowLeft, ArrowRight, Save } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Camera, ArrowLeft, ArrowRight, Sparkles, Star, Heart, Zap, CheckCircle, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
-import NotificationContainer, { useNotifications } from '../components/Notification/NotificationContainer';
+import { useNotifications } from '../components/Notification';
 
 interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
-  category: string;
+  price: string;
   images: string[];
 }
 
-interface EntrepreneurFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  profilePicture: string;
-  businessName: string;
-  category: string;
-  description: string;
-  location: string;
-  hallBlock: string;
-  priceRange: string;
-  products: Product[];
-  termsAccepted: boolean;
-}
-
-
 const categories = [
-  'Beauty & Hair', 'Tech & Design', 'Snacks & Treats', 'Events & Photography', 'Academics', 'Totebag & Accessories'
+  { id: '1', name: 'Beauty & Hair', icon: '💇‍♀️', color: 'from-purple-500 to-pink-500' },
+  { id: '2', name: 'Tech & Design', icon: '💻', color: 'from-blue-500 to-cyan-500' },
+  { id: '3', name: 'Snacks & Treats', icon: '🍰', color: 'from-yellow-500 to-orange-500' },
+  { id: '4', name: 'Events & Photography', icon: '📸', color: 'from-indigo-500 to-purple-500' },
+  { id: '5', name: 'Academics', icon: '📚', color: 'from-green-500 to-teal-500' },
+  { id: '6', name: 'Totebag & Accessories', icon: '👜', color: 'from-pink-500 to-rose-500' },
 ];
+
 const hallBlocks = ['Block A', 'Block B', 'Block C', 'Block D'];
 
 const Signup: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  // Step navigation handlers must be inside the component
-  const nextStep = () => setCurrentStep((prev: number) => Math.min(prev + 1, 4));
-  const prevStep = () => setCurrentStep((prev: number) => Math.max(prev - 1, 1));
-  const [formData, setFormData] = useState<EntrepreneurFormData>({
-    firstName: '',
-    lastName: '',
+  const [formData, setFormData] = useState({
+    fullName: '',
     email: '',
-    phone: '',
-    profilePicture: '',
-    businessName: '',
-    category: '',
-    description: '',
-    location: 'Mary Stuart Hall',
+    whatsapp: '',
     hallBlock: '',
-    priceRange: '',
-    products: [],
-    termsAccepted: false
-  });
-  const [currentProduct, setCurrentProduct] = useState<Omit<Product, 'id'>>({
-    name: '',
-    description: '',
-    price: 0,
     category: '',
-    images: []
+    bio: '',
+    priceRange: '',
+    profilePicture: '',
   });
-  const { notifications, addNotification, removeNotification } = useNotifications();
+  const [products, setProducts] = useState<Product[]>([]);
+  const { showSuccess, showError } = useNotifications();
   const navigate = useNavigate();
+
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleProductChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCurrentProduct(prev => ({
-      ...prev,
-      [name]: name === 'price' ? parseFloat(value) || 0 : value
-    }));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isProfile = false) => {
-    const files = e.target.files;
-    if (files) {
-      const imageUrls = Array.from(files).map(file => URL.createObjectURL(file));
-
-      if (isProfile) {
-        setFormData(prev => ({ ...prev, profilePicture: imageUrls[0] }));
-      } else {
-        setCurrentProduct(prev => ({
-          ...prev,
-          images: [...prev.images, ...imageUrls]
-        }));
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Image too large', 'Please choose an image smaller than 5MB');
+        return;
       }
-    }
-  };
-
-  const addProduct = () => {
-    if (currentProduct.name && currentProduct.price > 0) {
-      const newProduct: Product = {
-        ...currentProduct,
-        id: Date.now().toString(),
-        category: currentProduct.category || formData.category
+      
+      // Convert image to base64 so it can be stored permanently
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData((prev) => ({ ...prev, profilePicture: base64String }));
       };
-
-      setFormData(prev => ({
-        ...prev,
-        products: [...prev.products, newProduct]
-      }));
-
-      setCurrentProduct({
-        name: '',
-        description: '',
-        price: 0,
-        category: '',
-        images: []
-      });
+      reader.onerror = () => {
+        showError('Upload failed', 'There was an error reading your image. Please try again.');
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const removeProduct = (productId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      products: prev.products.filter(p => p.id !== productId)
-    }));
+  const addQuickProduct = () => {
+    const newProduct: Product = {
+      id: Date.now().toString(),
+      name: '',
+      description: '',
+      price: '',
+      images: [],
+    };
+    setProducts([...products, newProduct]);
   };
 
-  const removeProductImage = (imageIndex: number) => {
-    setCurrentProduct(prev => ({
-      ...prev,
-      images: prev.images.filter((_, index) => index !== imageIndex)
-    }));
+  const removeProduct = (id: string) => {
+    setProducts(products.filter((p) => p.id !== id));
   };
+
+  const updateProduct = (id: string, field: keyof Product, value: string | string[]) => {
+    setProducts(products.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+  };
+
+  // Handle product image upload
+  const handleProductImageUpload = (productId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Image too large', 'Please choose an image smaller than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          updateProduct(productId, 'images', [...product.images, base64String]);
+        }
+      };
+      reader.onerror = () => {
+        showError('Upload failed', 'There was an error reading your image. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove product image
+  const removeProductImage = (productId: string, imageIndex: number) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const updatedImages = product.images.filter((_, idx) => idx !== imageIndex);
+      updateProduct(productId, 'images', updatedImages);
+    }
+  };
+
+  // State for product image carousel
+  const [productImageIndex, setProductImageIndex] = useState<{ [key: string]: number }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Prepare hustler object for backend
+    
     const hustler = {
-      name: formData.firstName + ' ' + formData.lastName,
+      name: formData.fullName,
       university: 'Makerere University',
       category: formData.category,
-      location: formData.location + (formData.hallBlock ? ' - ' + formData.hallBlock : ''),
-      bio: formData.description,
-      profileImage: formData.profilePicture,
-      whatsapp: formData.phone,
+      location: `Mary Stuart Hall - ${formData.hallBlock}`,
+      bio: formData.bio || `Check out my amazing ${formData.category} services!`,
+      profileImage: formData.profilePicture || '',
+      whatsapp: formData.whatsapp,
       rating: 5,
       reviewCount: 0,
       portfolio: [],
       featured: false,
       joinedDate: new Date().toISOString(),
-      services: formData.products.map(p => p.name),
-      pricing: formData.priceRange,
-      products: formData.products,
+      services: products.map((p) => p.name).filter(Boolean),
+      pricing: formData.priceRange || 'Contact for pricing',
+      products: products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        category: formData.category,
+        images: p.images,
+        inStock: true,
+        createdDate: new Date().toISOString(),
+        updatedDate: new Date().toISOString(),
+      })),
     };
+
     try {
       const res = await fetch('http://localhost:4000/api/hustlers', {
         method: 'POST',
@@ -160,35 +164,39 @@ const Signup: React.FC = () => {
       });
       if (!res.ok) throw new Error('Failed to create hustler');
       const data = await res.json();
-      addNotification({
-        type: 'success',
-        title: '🎉 Welcome to MSH Community!',
-        message: `${formData.firstName}, your entrepreneur account has been created successfully! You can now start showcasing your amazing services to your hall mates.`,
-        duration: 180000,
-        large: true
-      });
+      
+      showSuccess(
+        '🎉 Welcome to the Community!',
+        `${formData.fullName}, you're all set! Start connecting with MSH students now.`,
+        5000,
+        { large: true }
+      );
+      
       setTimeout(() => {
         navigate(`/hustler/${data.id}`);
-      }, 2500);
+      }, 2000);
     } catch (err) {
-      addNotification({
-        type: 'error',
-        title: 'Signup Failed',
-        message: 'There was a problem creating your account. Please try again.',
-        duration: 8000,
-      });
+      showError(
+        'Oops! Something went wrong',
+        'Please try again or contact support if the issue persists.',
+        5000
+      );
     }
   };
 
-  const getStepTitle = () => {
+  const isStepValid = () => {
     switch (currentStep) {
-      case 1: return 'Personal Information';
-      case 2: return 'Business Details';
-      case 3: return 'Add Your Products';
-      case 4: return 'Review & Submit';
-      default: return 'Sign Up';
+      case 1:
+        return formData.fullName && formData.email && formData.whatsapp && formData.hallBlock;
+      case 2:
+        return formData.category && formData.bio;
+      case 3:
+        return true; // Review step - always valid
+      default:
+        return false;
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12">
@@ -197,438 +205,522 @@ const Signup: React.FC = () => {
         description="Become an entrepreneur at Mary Stuart Hall. Showcase your skills and connect with your hall mates."
       />
 
-      {/* Notification Container */}
-      <NotificationContainer
-        notifications={notifications}
-        onRemove={removeNotification}
-      />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Join the MSH Community
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-6 shadow-lg">
+            <Sparkles className="h-10 w-10 text-white" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Join the Community
           </h1>
-          <p className="text-gray-600 text-lg">
-            Start your entrepreneurial journey at Mary Stuart Hall
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Start your entrepreneurial journey at Mary Stuart Hall in just 3 simple steps!
           </p>
-        </div>
+        </motion.div>
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex flex-col items-center">
-                <div className={`
-                  w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
-                  ${currentStep >= step
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                    : 'bg-gray-200 text-gray-500'
-                  }
-                `}>
-                  {step}
+        {/* Progress Steps */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between max-w-xl mx-auto">
+            {[1, 2, 3].map((step) => (
+              <React.Fragment key={step}>
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 ${
+                      currentStep >= step
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-110'
+                        : 'bg-gray-200 text-gray-400'
+                    }`}
+                  >
+                    {currentStep > step ? <CheckCircle className="h-6 w-6" /> : step}
+                  </div>
+                  <span className="text-xs text-gray-600 mt-2 text-center hidden sm:block">
+                    {step === 1 && 'Your Info'}
+                    {step === 2 && 'Your Business'}
+                    {step === 3 && 'Add Products'}
+                  </span>
                 </div>
-                <span className="text-xs text-gray-500 mt-2 text-center">
-                  {step === 1 && 'Personal'}
-                  {step === 2 && 'Business'}
-                  {step === 3 && 'Products'}
-                  {step === 4 && 'Review'}
-                </span>
-              </div>
+                {step < 3 && (
+                  <div
+                    className={`h-1 flex-1 mx-2 rounded-full transition-all duration-300 ${
+                      currentStep > step
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600'
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
             ))}
           </div>
-          <div className="flex mt-4">
-            <div
-              className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / 4) * 100}%` }}
-            />
-            <div
-              className="h-2 bg-gray-200 rounded-full flex-1"
-              style={{ width: `${((4 - currentStep) / 4) * 100}%` }}
-            />
-          </div>
         </div>
 
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20"
-        >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">{getStepTitle()}</h2>
-
-          <form onSubmit={handleSubmit}>
+        {/* Form Steps */}
+        <form onSubmit={handleSubmit}>
+          <AnimatePresence mode="wait">
+            {/* Step 1: Basic Info */}
             {currentStep === 1 && (
-              <div className="space-y-6">
-                <div className="flex flex-col items-center mb-8">
-                  <div className="relative">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden">
-                      {formData.profilePicture ? (
-                        <img
-                          src={formData.profilePicture}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20"
+              >
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4">
+                    <User className="h-8 w-8 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Tell us about you</h2>
+                  <p className="text-gray-600">Just the basics to get you started</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Profile Picture */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative mb-4">
+                      <div className="w-28 h-28 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center overflow-hidden shadow-lg">
+                        {formData.profilePicture ? (
+                          <img
+                            src={formData.profilePicture}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-14 h-14 text-white" />
+                        )}
+                      </div>
+                      <label className="absolute bottom-0 right-0 bg-white rounded-full p-3 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                        <Camera className="w-5 h-5 text-gray-600" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
                         />
-                      ) : (
-                        <User className="w-16 h-16 text-white" />
-                      )}
+                      </label>
                     </div>
-                    <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                      <Camera className="w-5 h-5 text-gray-600" />
+                    <p className="text-sm text-gray-500">Tap to add your photo</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Your Full Name *</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="e.g., Grace Nakimuli"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, true)}
-                        className="hidden"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="your.email@students.mak.ac.ug"
+                        required
                       />
-                    </label>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-2">Upload your profile picture</p>
-                </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp *</label>
+                      <input
+                        type="tel"
+                        name="whatsapp"
+                        value={formData.whatsapp}
+                        onChange={handleInputChange}
+                        className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="07XX XXX XXX"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
-                  <input
-                    type="text"
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., Sarah's Hair Braiding"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Primary Category</label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hall Block</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Which Block? *</label>
                     <select
                       name="hallBlock"
                       value={formData.hallBlock}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       required
                     >
                       <option value="">Select your block</option>
-                      {hallBlocks.map(block => (
-                        <option key={block} value={block}>{block}</option>
+                      {hallBlocks.map((block) => (
+                        <option key={block} value={block}>
+                          {block}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Tell us about your business and services..."
-                    required
-                  />
+                <div className="flex justify-end mt-8">
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!isStepValid()}
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                  >
+                    Next
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">General Price Range</label>
-                  <input
-                    type="text"
-                    name="priceRange"
-                    value={formData.priceRange}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., 5,000 - 50,000 UGX"
-                  />
-                </div>
-              </div>
+              </motion.div>
             )}
 
-            {currentStep === 3 && (
-              <div className="space-y-8">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Add a Product/Service</h3>
-
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
-                        <input
-                          type="text"
-                          name="name"
-                          value={currentProduct.name}
-                          onChange={handleProductChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="e.g., Box Braids"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Price (UGX)</label>
-                        <input
-                          type="number"
-                          name="price"
-                          value={currentProduct.price || ''}
-                          onChange={handleProductChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="25000"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                      <textarea
-                        name="description"
-                        value={currentProduct.description}
-                        onChange={handleProductChange}
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Describe this product/service..."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                      <div className="flex flex-wrap gap-4 mb-4">
-                        {currentProduct.images.map((image, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={image}
-                              alt={`Product ${index + 1}`}
-                              className="w-20 h-20 object-cover rounded-lg border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeProductImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-
-                        <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
-                          <Plus className="w-6 h-6 text-gray-400" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => handleImageUpload(e, false)}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={addProduct}
-                      disabled={!currentProduct.name || !currentProduct.price}
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                    >
-                      Add Product
-                    </button>
+            {/* Step 2: Business */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20"
+              >
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-4">
+                    <Star className="h-8 w-8 text-white" />
                   </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">What's your hustle?</h2>
+                  <p className="text-gray-600">Tell us about your business</p>
                 </div>
 
-                {formData.products.length > 0 && (
+                <div className="space-y-6">
+                  {/* Category Selection */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Products ({formData.products.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {formData.products.map((product) => (
-                        <div key={product.id} className="bg-white rounded-lg border p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold text-gray-800">{product.name}</h4>
-                            <button
-                              type="button"
-                              onClick={() => removeProduct(product.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{product.description}</p>
-                          <p className="font-bold text-blue-600">{product.price.toLocaleString()} UGX</p>
-                          {product.images.length > 0 && (
-                            <div className="flex gap-2 mt-2">
-                              {product.images.slice(0, 3).map((image, index) => (
-                                <img
-                                  key={index}
-                                  src={image}
-                                  alt=""
-                                  className="w-12 h-12 object-cover rounded"
-                                />
-                              ))}
-                              {product.images.length > 3 && (
-                                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
-                                  +{product.images.length - 3}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-4">Choose Your Category *</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, category: category.name }))}
+                          className={`p-4 rounded-2xl border-2 transition-all duration-200 transform hover:scale-105 ${
+                            formData.category === category.name
+                              ? `border-purple-500 bg-gradient-to-br ${category.color} text-white shadow-lg`
+                              : 'border-gray-200 bg-white hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="text-3xl mb-2">{category.icon}</div>
+                          <div className="text-sm font-semibold">{category.name}</div>
+                        </button>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Review Your Information</h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-2">Personal Information</h4>
-                      <div className="bg-white rounded-lg p-4 space-y-2">
-                        <p><span className="font-medium">Name:</span> {formData.firstName} {formData.lastName}</p>
-                        <p><span className="font-medium">Email:</span> {formData.email}</p>
-                        <p><span className="font-medium">Phone:</span> {formData.phone}</p>
-                        <p><span className="font-medium">Location:</span> {formData.location} - {formData.hallBlock}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-2">Business Information</h4>
-                      <div className="bg-white rounded-lg p-4 space-y-2">
-                        <p><span className="font-medium">Business:</span> {formData.businessName}</p>
-                        <p><span className="font-medium">Category:</span> {formData.category}</p>
-                        <p><span className="font-medium">Price Range:</span> {formData.priceRange}</p>
-                        <p><span className="font-medium">Products:</span> {formData.products.length} items</p>
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Describe Your Business *
+                    </label>
+                    <textarea
+                      name="bio"
+                      value={formData.bio}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+                      placeholder="Tell MSH students about what you offer and what makes you special..."
+                      required
+                    />
                   </div>
 
-                  <div className="mt-6">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.termsAccepted}
-                        onChange={(e) => setFormData(prev => ({ ...prev, termsAccepted: e.target.checked }))}
-                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
-                        required
-                      />
-                      <span className="ml-2 text-sm text-gray-600">
-                        I agree to the <a href="#" className="text-blue-600 hover:text-blue-500">Terms of Service</a> and
-                        <a href="#" className="text-blue-600 hover:text-blue-500 ml-1">Privacy Policy</a>
-                      </span>
-                    </label>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range (Optional)</label>
+                    <input
+                      type="text"
+                      name="priceRange"
+                      value={formData.priceRange}
+                      onChange={handleInputChange}
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="e.g., From 15,000 UGX or 5,000 - 50,000 UGX"
+                    />
                   </div>
                 </div>
-              </div>
+
+                <div className="flex justify-between mt-8">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!isStepValid()}
+                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                  >
+                    Continue
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </motion.div>
             )}
 
-            <div className="flex justify-between mt-8">
-              {currentStep > 1 && (
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
-                </button>
-              )}
+            {/* Step 3: Products (Optional) */}
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20"
+              >
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full mb-4">
+                    <Heart className="h-8 w-8 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Add Your Products</h2>
+                  <p className="text-gray-600">Optional - You can add products later too!</p>
+                </div>
 
-              {currentStep < 4 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 ml-auto"
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!formData.termsAccepted}
-                  className="flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ml-auto"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Create Account
-                </button>
-              )}
-            </div>
-          </form>
-        </motion.div>
+                <div className="space-y-4 mb-6">
+                  {products.map((product, index) => (
+                    <div key={product.id} className="bg-white rounded-xl p-5 border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-sm font-semibold text-gray-700">Product {index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeProduct(product.id)}
+                          className="text-red-500 hover:text-red-700 font-bold text-lg"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Product Image Section */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Product Images {product.images.length > 0 && `(${product.images.length})`}
+                        </label>
+                        
+                        {product.images.length > 0 ? (
+                          <div className="relative mb-3">
+                            {/* Main Image Display */}
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 mb-3 group">
+                              <img
+                                src={product.images[productImageIndex[product.id] || 0]}
+                                alt={`Product ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              
+                              {/* Image Navigation for Multiple Images */}
+                              {product.images.length > 1 && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const currentIndex = productImageIndex[product.id] || 0;
+                                      const newIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+                                      setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                    }}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    aria-label="Previous image"
+                                  >
+                                    <ChevronLeft className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const currentIndex = productImageIndex[product.id] || 0;
+                                      const newIndex = (currentIndex + 1) % product.images.length;
+                                      setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    aria-label="Next image"
+                                  >
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                  
+                                  {/* Image Indicators */}
+                                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                    {product.images.map((_, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`h-1.5 rounded-full transition-all ${
+                                          idx === (productImageIndex[product.id] || 0) ? 'bg-white w-6' : 'bg-white/50 w-1.5'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Image Thumbnail Grid */}
+                            <div className="grid grid-cols-4 gap-2">
+                              {product.images.map((img, imgIndex) => (
+                                <div key={imgIndex} className="relative group">
+                                  <div className={`aspect-square rounded-lg overflow-hidden border-2 ${
+                                    imgIndex === (productImageIndex[product.id] || 0) 
+                                      ? 'border-blue-500 ring-2 ring-blue-200' 
+                                      : 'border-gray-200'
+                                  }`}>
+                                    <img
+                                      src={img}
+                                      alt={`Product ${index + 1} image ${imgIndex + 1}`}
+                                      className="w-full h-full object-cover cursor-pointer"
+                                      onClick={() => setProductImageIndex(prev => ({ ...prev, [product.id]: imgIndex }))}
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProductImage(product.id, imgIndex)}
+                                    className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                                    title="Remove image"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              
+                              {/* Add More Images Button */}
+                              <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                                <div className="text-center">
+                                  <Upload className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+                                  <span className="text-xs text-gray-500">Add</span>
+                                </div>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleProductImageUpload(product.id, e)}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-3">
+                            <label className="cursor-pointer inline-flex items-center px-4 py-3 border-2 border-dashed border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium w-full justify-center">
+                              <Upload className="h-5 w-5 mr-2" />
+                              Upload Product Image
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleProductImageUpload(product.id, e)}
+                              />
+                            </label>
+                            <p className="text-xs text-gray-500 mt-2 text-center">Or paste image URL below</p>
+                          </div>
+                        )}
+
+                        {/* URL Input for Images */}
+                        <input
+                          type="url"
+                          placeholder="Or paste image URL here (e.g., https://example.com/image.jpg)"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          onBlur={(e) => {
+                            const url = e.target.value.trim();
+                            if (url) {
+                              const foundProduct = products.find(p => p.id === product.id);
+                              if (foundProduct) {
+                                updateProduct(product.id, 'images', [...foundProduct.images, url]);
+                                e.target.value = '';
+                              }
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const target = e.target as HTMLInputElement;
+                              const url = target.value.trim();
+                              if (url) {
+                                const foundProduct = products.find(p => p.id === product.id);
+                                if (foundProduct) {
+                                  updateProduct(product.id, 'images', [...foundProduct.images, url]);
+                                  target.value = '';
+                                }
+                              }
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Press Enter or click outside to add URL</p>
+                      </div>
+
+                      {/* Product Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          placeholder="Product name *"
+                          value={product.name}
+                          onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Price (e.g., 25,000 UGX) *"
+                          value={product.price}
+                          onChange={(e) => updateProduct(product.id, 'price', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Description (optional)"
+                          value={product.description}
+                          onChange={(e) => updateProduct(product.id, 'description', e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addQuickProduct}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-gray-600 hover:text-blue-600 font-semibold"
+                  >
+                    + Add Product/Service
+                  </button>
+                </div>
+
+                {products.length === 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                    <p className="text-sm text-blue-800 text-center">
+                      💡 No worries! You can skip this and add products anytime from your dashboard.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-between mt-8">
+                  <button
+                    type="button"
+                    onClick={prevStep}
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                  >
+                    <Zap className="h-5 w-5" />
+                    Join the Community!
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </form>
 
         <div className="text-center mt-8">
           <p className="text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
               Sign in here
             </Link>
           </p>

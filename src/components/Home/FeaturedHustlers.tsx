@@ -1,10 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MapPin, Phone, Crown, Sparkles, Heart } from 'lucide-react';
-import { hustlers } from '../../data/cleanMockData';
 
 const FeaturedHustlers: React.FC = () => {
-  const featuredHustlers = hustlers.filter(hustler => hustler.featured).slice(0, 3);
+  const [featuredHustlers, setFeaturedHustlers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedHustlers = async () => {
+      try {
+        const res = await fetch('http://localhost:4000/api/hustlers');
+        const data = await res.json();
+        const featured = data.filter((h: any) => h.featured).slice(0, 3);
+        setFeaturedHustlers(featured);
+      } catch (err) {
+        setFeaturedHustlers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeaturedHustlers();
+  }, []);
 
   return (
     <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -21,8 +37,19 @@ const FeaturedHustlers: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredHustlers.map((hustler, index) => (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <p className="mt-4 text-gray-600">Loading featured entrepreneurs...</p>
+          </div>
+        ) : featuredHustlers.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">No featured entrepreneurs at the moment.</p>
+            <p className="text-gray-500 mt-2">Check back soon for featured MSH entrepreneurs!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredHustlers.map((hustler, index) => (
             <div key={hustler.id} className="group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 transform hover:-translate-y-2">
               {/* Gradient overlay on hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-600/0 group-hover:from-blue-500/10 group-hover:to-purple-600/10 transition-all duration-500 z-10"></div>
@@ -112,7 +139,8 @@ const FeaturedHustlers: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );

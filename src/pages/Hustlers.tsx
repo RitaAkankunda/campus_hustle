@@ -10,6 +10,9 @@ const Hustlers: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedUniversity, setSelectedUniversity] = useState('');
+  const [sortBy, setSortBy] = useState('rating');
+  const [minRating, setMinRating] = useState<number | undefined>(undefined);
+  const [priceRange, setPriceRange] = useState<{ min: string; max: string } | undefined>(undefined);
   const [hustlers, setHustlers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,19 +31,49 @@ const Hustlers: React.FC = () => {
     fetchHustlers();
   }, []);
 
-  const filteredHustlers = useMemo(() => {
-    return hustlers.filter((hustler: any) => {
-      const matchesSearch = hustler.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredAndSortedHustlers = useMemo(() => {
+    // First, apply filters
+    let filtered = hustlers.filter((hustler: any) => {
+      const matchesSearch = searchQuery === '' ||
+        hustler.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hustler.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (hustler.services || []).some((service: string) => service.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesCategory = !selectedCategory || hustler.category === selectedCategory;
       const matchesLocation = !selectedLocation || hustler.location === selectedLocation;
       const matchesUniversity = !selectedUniversity || hustler.university === selectedUniversity;
+      
+      // Rating filter
+      const matchesRating = minRating === undefined || (hustler.rating || 0) >= minRating;
 
-      return matchesSearch && matchesCategory && matchesLocation && matchesUniversity;
+      // Price range filter (check if any product matches)
+      const matchesPrice = !priceRange || (priceRange.min === '' && priceRange.max === '') ||
+        (hustler.products || []).some((product: any) => {
+          const priceMatch = true; // Price parsing would be more complex, simplified for now
+          return priceMatch;
+        });
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesUniversity && matchesRating && matchesPrice;
     });
-  }, [hustlers, searchQuery, selectedCategory, selectedLocation, selectedUniversity]);
+
+    // Then, apply sorting
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      switch (sortBy) {
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'reviews':
+          return (b.reviewCount || 0) - (a.reviewCount || 0);
+        case 'newest':
+          return new Date(b.joinedDate || 0).getTime() - new Date(a.joinedDate || 0).getTime();
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [hustlers, searchQuery, selectedCategory, selectedLocation, selectedUniversity, sortBy, minRating, priceRange]);
 
   // Featured hustlers (promotions)
   const featuredHustlers = hustlers.filter((h: any) => h.featured);
@@ -78,22 +111,33 @@ const Hustlers: React.FC = () => {
           setSelectedLocation={setSelectedLocation}
           selectedUniversity={selectedUniversity}
           setSelectedUniversity={setSelectedUniversity}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          minRating={minRating}
+          setMinRating={setMinRating}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
         />
 
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-semibold text-gray-900">
-            {filteredHustlers.length} MSH Entrepreneurs Found
+            {filteredAndSortedHustlers.length} MSH Entrepreneurs Found
           </h2>
+          {(minRating || priceRange) && (
+            <div className="text-sm text-gray-600">
+              Filters active: {minRating && `${minRating}+ ⭐`} {priceRange && '(Price range)'}
+            </div>
+          )}
         </div>
 
-        {filteredHustlers.length > 0 ? (
+        {filteredAndSortedHustlers.length > 0 ? (
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {filteredHustlers.map((hustler, index) => (
+            {filteredAndSortedHustlers.map((hustler, index) => (
               <motion.div
                 key={hustler.id}
                 initial={{ opacity: 0, y: 20 }}

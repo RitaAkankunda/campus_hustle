@@ -4,7 +4,7 @@ import { Mail, ArrowLeft, Send, CheckCircle, Heart } from 'lucide-react';
 import { useNotifications } from '../components/Notification';
 
 const ForgotPassword: React.FC = () => {
-  const { showSuccess, showError, NotificationContainer } = useNotifications();
+  const { showSuccess, showError } = useNotifications();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
@@ -98,7 +98,6 @@ const ForgotPassword: React.FC = () => {
             </div>
           </div>
         </div>
-        <NotificationContainer />
       </div>
     );
   }

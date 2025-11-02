@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CampusHustle - Student Marketplace Website</title>
   </head>
@@ -10,11 +10,36 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js');
-        });
-      }
+      (async function() {
+        // In development, always unregister service workers to avoid caching issues
+        try {
+          if ('serviceWorker' in navigator) {
+            // Check if we're in development (localhost)
+            const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (isDev) {
+              // In dev mode, unregister all service workers and clear caches
+              const regs = await navigator.serviceWorker.getRegistrations();
+              for (const r of regs) {
+                await r.unregister();
+              }
+              
+              // Clear all caches
+              const cacheNames = await caches.keys();
+              await Promise.all(cacheNames.map(name => caches.delete(name)));
+              
+              console.log('Service worker unregistered and caches cleared for development');
+            } else {
+              // In production, register the service worker
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('Service worker handling failed', e);
+        }
+      })();
     </script>
   </body>
 </html>

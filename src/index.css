@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Brand purple global styles */
+:root {
+  --brand-purple: #6D28D9;
+  --brand-purple-light: #A78BFA;
+  --brand-purple-dark: #5B21B6;
+}
+
+body {
+  /* subtle purple gradient background used across the app */
+  background: linear-gradient(180deg, rgba(49, 46, 129, 0.95) 0%, rgba(99, 102, 241, 0.95) 50%, rgba(139, 92, 246, 0.95) 100%);
+}
+
+/* Make anchors and primary buttons purple by default */
+a {
+  color: var(--brand-purple-light);
+}
+
+.btn-primary {
+  background-color: var(--brand-purple);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-purple-dark);
+}
+
+/* subtle card accent */
+.card-accent {
+  box-shadow: 0 8px 30px rgba(107,70,193,0.18), inset 0 1px 0 rgba(255,255,255,0.02);
+  border: 1px solid rgba(107,70,193,0.07);
+}
+
 /* Custom Notifications */
 @keyframes progress-shrink {
   from { 

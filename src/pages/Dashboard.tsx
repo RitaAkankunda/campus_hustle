@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductDashboard from '../components/Admin/ProductDashboard';
-import { hustlers } from '../data/cleanMockData';
 import { rewards } from '../data/mockRewards';
 import Rewards from '../components/Rewards';
 import EventCalendar from '../components/EventCalendar';
@@ -12,40 +11,101 @@ const Dashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showError } = useNotifications();
-  
-  // In a real app, this would come from authentication state
-  const [currentHustler, setCurrentHustler] = useState(() => {
-    return hustlers.find(h => h.id === id) || hustlers[0];
-  });
+  const [currentHustler, setCurrentHustler] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleUpdateProduct = (productId: string, updates: Partial<Product>) => {
-    setCurrentHustler(prev => ({
-      ...prev,
-      products: prev.products.map(product =>
+  useEffect(() => {
+    const fetchHustler = async () => {
+      if (!id) return;
+      try {
+        const res = await fetch(`http://localhost:4000/api/hustlers`);
+        const data = await res.json();
+        const found = data.find((h: any) => String(h.id) === String(id));
+        if (found) {
+          setCurrentHustler(found);
+        }
+      } catch (err) {
+        console.error('Error fetching hustler:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHustler();
+  }, [id]);
+
+  const handleUpdateProduct = async (productId: string, updates: Partial<Product>) => {
+    if (!currentHustler) return;
+    
+    try {
+      const updatedProducts = currentHustler.products.map((product: any) =>
         product.id === productId
           ? { ...product, ...updates }
           : product
-      )
-    }));
+      );
+
+      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updatedProducts })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setCurrentHustler(updated);
+      }
+    } catch (err) {
+      console.error('Error updating product:', err);
+    }
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setCurrentHustler(prev => ({
-      ...prev,
-      products: prev.products.filter(product => product.id !== productId)
-    }));
+  const handleDeleteProduct = async (productId: string) => {
+    if (!currentHustler) return;
+
+    try {
+      const updatedProducts = currentHustler.products.filter((product: any) => product.id !== productId);
+
+      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updatedProducts })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setCurrentHustler(updated);
+      }
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
   };
 
-  const handleAddProduct = (productData: Omit<Product, 'id'>) => {
+  const handleAddProduct = async (productData: Omit<Product, 'id'>) => {
+    if (!currentHustler) return;
+
     const newProduct: Product = {
       ...productData,
-      id: `p${Date.now()}` // Simple ID generation
+      id: `p${Date.now()}`,
+      images: productData.images || [],
+      createdDate: new Date().toISOString().split('T')[0],
+      updatedDate: new Date().toISOString().split('T')[0]
     };
-    
-    setCurrentHustler(prev => ({
-      ...prev,
-      products: [...prev.products, newProduct]
-    }));
+
+    try {
+      const updatedProducts = [...currentHustler.products, newProduct];
+
+      const res = await fetch(`http://localhost:4000/api/hustlers/${currentHustler.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: updatedProducts })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setCurrentHustler(updated);
+      }
+    } catch (err) {
+      console.error('Error adding product:', err);
+    }
   };
 
   const handleDeleteProfile = () => {
@@ -60,12 +120,29 @@ const Dashboard: React.FC = () => {
     }, 2000);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentHustler) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600">You need to be logged in to access this page.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h2>
+          <p className="text-gray-600 mb-4">The profile you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate('/hustlers')}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium"
+          >
+            Browse Entrepreneurs
+          </button>
         </div>
       </div>
     );

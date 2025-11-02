@@ -99,6 +99,7 @@ export interface Category {
   icon: string;
   color: string;
   count: number;
+  images?: string[]; // Array of image URLs or base64 strings
 }
 
 export interface BlogPost {

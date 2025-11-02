@@ -1,15 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, MapPin, Phone, Calendar } from 'lucide-react';
+import { Star, MapPin, Phone, Calendar, Heart } from 'lucide-react';
 import SocialShare from '../SocialShare';
 import { Hustler } from '../../types';
 import { analytics } from '../../utils/analytics';
+import { useFavorites } from '../../hooks/useFavorites';
 
 interface HustlerCardProps {
   hustler: Hustler;
 }
 
 const HustlerCard: React.FC<HustlerCardProps> = ({ hustler }) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(hustler.id);
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <div className="relative">
@@ -18,6 +21,25 @@ const HustlerCard: React.FC<HustlerCardProps> = ({ hustler }) => {
           alt={hustler.name}
           className="w-full h-48 object-cover"
         />
+        {/* Favorite Button - Top Left */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(hustler.id);
+          }}
+          className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full p-2 z-20 transition-all duration-200 shadow-lg"
+          title={favorited ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Heart 
+            className={`h-5 w-5 transition-all duration-200 ${
+              favorited 
+                ? 'text-red-500 fill-red-500' 
+                : 'text-gray-400 hover:text-red-400'
+            }`} 
+          />
+        </button>
+
         {/* Badges and Featured label - moved to top right to avoid overlap */}
         <div className="absolute top-3 right-3 flex flex-col items-end space-y-1 z-10">
           {hustler.featured && (

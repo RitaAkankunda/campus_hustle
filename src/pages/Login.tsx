@@ -4,7 +4,7 @@ import { Mail, Lock, Heart, Sparkles } from 'lucide-react';
 import { useNotifications } from '../components/Notification';
 
 const Login: React.FC = () => {
-  const { showSuccess, NotificationContainer } = useNotifications();
+  const { showSuccess } = useNotifications();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -129,7 +129,6 @@ const Login: React.FC = () => {
           </div>
         </form>
       </div>
-      <NotificationContainer />
     </div>
   );
 };

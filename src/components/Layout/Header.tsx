@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import usePWAInstallPrompt from '../../hooks/usePWAInstallPrompt';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Star } from 'lucide-react';
+import { Menu, X, Star, Heart } from 'lucide-react';
+import { useFavorites } from '../../hooks/useFavorites';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { favorites } = useFavorites();
 
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'MSH Entrepreneurs', href: '/hustlers' },
     { name: 'Services', href: '/categories' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Messages', href: '/messages' },
     { name: 'About', href: '/about' }
   ];
 
@@ -58,6 +59,18 @@ const Header: React.FC = () => {
 
           {/* CTA Button */}
           <div className="hidden md:flex items-center space-x-4">
+            <Link
+              to="/favorites"
+              className="relative text-gray-600 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
+              title="My Favorites"
+            >
+              <Heart className={`h-5 w-5 ${favorites.length > 0 ? 'text-red-500 fill-red-500' : ''}`} />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {favorites.length > 9 ? '9+' : favorites.length}
+                </span>
+              )}
+            </Link>
             <Link
               to="/login"
               className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -108,6 +121,19 @@ const Header: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+              <Link
+                to="/favorites"
+                onClick={() => setIsOpen(false)}
+                className="relative text-gray-600 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium transition-colors text-center flex items-center justify-center gap-2"
+              >
+                <Heart className={`h-5 w-5 ${favorites.length > 0 ? 'text-red-500 fill-red-500' : ''}`} />
+                <span>Favorites</span>
+                {favorites.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
               <Link
                 to="/login"
                 onClick={() => setIsOpen(false)}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MapPin, Phone, Calendar, Award, MessageCircle, ArrowLeft, Send } from 'lucide-react';
+import { Star, MapPin, Phone, Calendar, Award, ArrowLeft, Camera, X, Upload, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { testimonials as initialTestimonials } from '../data/cleanMockData';
 import HustlerReviewForm from '../components/Hustlers/HustlerReviewForm';
 import { useNotifications } from '../components/Notification';
@@ -8,17 +8,17 @@ import { useNotifications } from '../components/Notification';
 
 const HustlerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [bookingData, setBookingData] = useState({
-    name: '',
-    email: '',
-    message: '',
-    phone: ''
-  });
   const [hustler, setHustler] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditImageModal, setShowEditImageModal] = useState(false);
+  const [newProfileImage, setNewProfileImage] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [editingProductImage, setEditingProductImage] = useState<any>(null);
+  const [showProductImageModal, setShowProductImageModal] = useState(false);
+  const [productImageUpdates, setProductImageUpdates] = useState<string[]>([]);
+  const [productImageIndex, setProductImageIndex] = useState<{ [key: string]: number }>({});
   const { showSuccess, showError } = useNotifications();
 
   useEffect(() => {
@@ -29,6 +29,17 @@ const HustlerProfile: React.FC = () => {
         const data = await res.json();
         const found = data.find((h: any) => String(h.id) === String(id));
         setHustler(found || null);
+        
+        // Initialize image indices for all products
+        if (found?.products) {
+          const indices: { [key: string]: number } = {};
+          found.products.forEach((product: any) => {
+            if (product.images && product.images.length > 0) {
+              indices[product.id] = 0;
+            }
+          });
+          setProductImageIndex(indices);
+        }
       } catch (err) {
         setHustler(null);
       } finally {
@@ -39,21 +50,192 @@ const HustlerProfile: React.FC = () => {
   }, [id]);
 
   const hustlerTestimonials = testimonials.filter((t: any) => t.hustler === hustler?.name);
+  
   // Handle new review submission
-  const handleReviewSubmit = (review: { name: string; rating: number; comment: string }) => {
+  const handleReviewSubmit = async (review: { name: string; rating: number; comment: string }) => {
     if (!hustler) return;
-    setTestimonials((prev: any[]) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        name: review.name,
-        university: hustler.university,
-        rating: review.rating,
-        comment: review.comment,
-        hustler: hustler.name,
-        date: new Date().toISOString().slice(0, 10)
+    
+    try {
+      // Submit review to backend
+      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(review)
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to submit review');
       }
-    ]);
+      
+      const newReview = await res.json();
+      
+      // Update local testimonials
+      setTestimonials((prev: any[]) => [...prev, newReview]);
+      
+      // Refresh hustler data to get updated rating and review count
+      const hustlerRes = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`);
+      const updatedHustler = await hustlerRes.json();
+      setHustler(updatedHustler);
+      
+      // Show success notification
+      showSuccess(
+        'Review Submitted! 🎉',
+        'Thank you for your feedback. Your review has been posted successfully.',
+        5000
+      );
+    } catch (err) {
+      showError(
+        'Review Submission Failed',
+        'There was a problem submitting your review. Please try again.',
+        5000
+      );
+    }
+  };
+
+  // Handle profile image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Image too large', 'Please choose an image smaller than 5MB');
+        return;
+      }
+      
+      // Convert image to base64 so it can be stored permanently
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setNewProfileImage(base64String);
+      };
+      reader.onerror = () => {
+        showError('Upload failed', 'There was an error reading your image. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Save new profile image
+  const handleSaveProfileImage = async () => {
+    if (!hustler || !newProfileImage) return;
+    
+    setIsUploadingImage(true);
+    try {
+      // Only send the profileImage field to avoid sending the entire large object
+      const updateData = {
+        profileImage: newProfileImage
+      };
+      
+      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${res.status}: Failed to update profile image`);
+      }
+      
+      const updatedHustler = await res.json();
+      setHustler(updatedHustler);
+      setShowEditImageModal(false);
+      setNewProfileImage('');
+      
+      showSuccess(
+        'Profile Image Updated! 🎉',
+        'Your profile picture has been updated successfully.',
+        5000
+      );
+    } catch (err: any) {
+      console.error('Error updating profile image:', err);
+      showError(
+        'Update Failed',
+        err.message || 'There was a problem updating your profile image. Please try again.',
+        5000
+      );
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Handle product image upload
+  const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Image too large', 'Please choose an image smaller than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setProductImageUpdates([...productImageUpdates, base64String]);
+      };
+      reader.onerror = () => {
+        showError('Upload failed', 'There was an error reading your image. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Save product image updates
+  const handleSaveProductImages = async () => {
+    if (!hustler || !editingProductImage) return;
+    
+    setIsUploadingImage(true);
+    try {
+      const updatedProducts = hustler.products.map((product: any) => {
+        if (product.id === editingProductImage.id) {
+          return {
+            ...product,
+            images: productImageUpdates.length > 0 ? productImageUpdates : product.images
+          };
+        }
+        return product;
+      });
+
+      const res = await fetch(`http://localhost:4000/api/hustlers/${hustler.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          products: updatedProducts
+        })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to update product images');
+      }
+      
+      const updatedHustler = await res.json();
+      setHustler(updatedHustler);
+      setShowProductImageModal(false);
+      setEditingProductImage(null);
+      setProductImageUpdates([]);
+      
+      showSuccess(
+        'Product Images Updated! 🎉',
+        'Your product images have been updated successfully.',
+        5000
+      );
+    } catch (err: any) {
+      console.error('Error updating product images:', err);
+      showError(
+        'Update Failed',
+        err.message || 'There was a problem updating product images. Please try again.',
+        5000
+      );
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Open product image editor
+  const handleEditProductImages = (product: any) => {
+    setEditingProductImage(product);
+    setProductImageUpdates(product.images && product.images.length > 0 ? [...product.images] : []);
+    setShowProductImageModal(true);
   };
 
   // Delete profile handler
@@ -92,14 +274,6 @@ const HustlerProfile: React.FC = () => {
     );
   }
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here you would handle the booking submission
-    alert('Booking request sent! The hustler will contact you soon.');
-    setShowBookingForm(false);
-    setBookingData({ name: '', email: '', message: '', phone: '' });
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,12 +296,34 @@ const HustlerProfile: React.FC = () => {
                 {/* Badges and Featured label removed for a cleaner look */}
                 <div className="absolute bottom-6 left-6 right-6">
                   <div className="flex items-end space-x-6">
-                    <div className="relative">
-                      <img
-                        src={hustler.profileImage}
-                        alt={hustler.name}
-                        className="w-24 h-24 rounded-full border-4 border-white object-cover"
-                      />
+                    <div className="relative group">
+                      {hustler.profileImage ? (
+                        <img
+                          src={hustler.profileImage}
+                          alt={hustler.name}
+                          className="w-24 h-24 rounded-full border-4 border-white object-cover"
+                          onError={(e) => {
+                            // If image fails to load, hide it and show default
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-r from-purple-400 to-blue-400 flex items-center justify-center">
+                          <span className="text-white text-2xl font-bold">{hustler.name.charAt(0).toUpperCase()}</span>
+                        </div>
+                      )}
+                      {/* Edit Image Button */}
+                      <button
+                        onClick={() => {
+                          setNewProfileImage(hustler.profileImage || '');
+                          setShowEditImageModal(true);
+                        }}
+                        className="absolute bottom-0 right-0 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 transform hover:scale-110"
+                        title="Edit Profile Picture"
+                      >
+                        <Camera className="h-4 w-4" />
+                      </button>
                     </div>
                     {/* Name removed from header for cleaner look */}
                   </div>
@@ -227,38 +423,145 @@ const HustlerProfile: React.FC = () => {
                   {hustler.products.filter((product: any) => product.inStock).map((product: any) => (
                     <div
                       key={product.id}
-                      className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-100 hover:shadow-lg transition-all duration-200 hover:scale-105"
+                      className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-100 hover:shadow-lg transition-all duration-200 hover:scale-105 relative group"
                     >
                       <div className="relative mb-4">
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-40 object-cover rounded-lg"
-                        />
-                        <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {product.images && product.images.length > 0 ? (
+                          <>
+                            <div className="relative w-full h-40 overflow-hidden rounded-lg">
+                              <img
+                                src={product.images[productImageIndex[product.id] || 0]}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                                }}
+                              />
+                              
+                              {/* Image Navigation for Multiple Images */}
+                              {product.images.length > 1 && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const currentIndex = productImageIndex[product.id] || 0;
+                                      const newIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+                                      setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                    }}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    aria-label="Previous image"
+                                  >
+                                    <ChevronLeft className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const currentIndex = productImageIndex[product.id] || 0;
+                                      const newIndex = (currentIndex + 1) % product.images.length;
+                                      setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    aria-label="Next image"
+                                  >
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                  
+                                  {/* Image Indicators */}
+                                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                    {product.images.map((_: string, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className={`h-1.5 rounded-full transition-all ${
+                                          idx === (productImageIndex[product.id] || 0) ? 'bg-white w-6' : 'bg-white/50 w-1.5'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                              
+                              {/* All Images Thumbnail Strip */}
+                              {product.images.length > 1 && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                                  <div className="flex gap-1.5 justify-center overflow-x-auto">
+                                    {product.images.map((img: string, idx: number) => (
+                                      <button
+                                        key={idx}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setProductImageIndex(prev => ({ ...prev, [product.id]: idx }));
+                                        }}
+                                        className={`flex-shrink-0 w-10 h-10 rounded border-2 overflow-hidden ${
+                                          idx === (productImageIndex[product.id] || 0) 
+                                            ? 'border-white shadow-lg scale-110' 
+                                            : 'border-white/50 opacity-70 hover:opacity-100'
+                                        } transition-all`}
+                                      >
+                                        <img
+                                          src={img}
+                                          alt={`${product.name} ${idx + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                            <Camera className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium z-10">
                           In Stock
                         </div>
+                        {/* Edit Image Button - Always Visible */}
+                        <button
+                          onClick={() => handleEditProductImages(product)}
+                          className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 group-hover:opacity-100 z-10"
+                          title="Edit Images"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
                       </div>
                       
                       <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                       
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="text-lg font-bold text-purple-600">{product.price}</span>
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                           {product.category}
                         </span>
                       </div>
+
+                      {/* Image count indicator - only show if multiple images */}
+                      {product.images && product.images.length > 1 && (
+                        <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                          <Camera className="h-3 w-3" />
+                          <span>
+                            {productImageIndex[product.id] !== undefined 
+                              ? `${(productImageIndex[product.id] || 0) + 1} of ${product.images.length}` 
+                              : `${product.images.length} images`}
+                          </span>
+                        </div>
+                      )}
                       
-                      <button
-                        onClick={() => {
-                          const message = `Hi! I'm interested in your ${product.name}. Is it still available?`;
-                          window.open(`https://wa.me/${hustler.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
-                        }}
-                        className="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
+                      <a
+                        href={`https://wa.me/${hustler.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi! I'm interested in your ${product.name}. Is it still available?`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full mt-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
                       >
+                        <Phone className="h-4 w-4" />
                         Order via WhatsApp
-                      </button>
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -273,14 +576,107 @@ const HustlerProfile: React.FC = () => {
                           className="bg-gray-50 rounded-xl p-4 border border-gray-200 opacity-75"
                         >
                           <div className="relative mb-4">
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="w-full h-40 object-cover rounded-lg grayscale"
-                            />
-                            <div className="absolute top-2 right-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                            {product.images && product.images.length > 0 ? (
+                              <>
+                                <div className="relative w-full h-40 overflow-hidden rounded-lg">
+                                  <img
+                                    src={product.images[productImageIndex[product.id] || 0]}
+                                    alt={product.name}
+                                    className="w-full h-40 object-cover rounded-lg grayscale"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                                    }}
+                                  />
+                                  
+                                  {/* Image Navigation for Multiple Images */}
+                                  {product.images.length > 1 && (
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          const currentIndex = productImageIndex[product.id] || 0;
+                                          const newIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+                                          setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                        }}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                        aria-label="Previous image"
+                                      >
+                                        <ChevronLeft className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          const currentIndex = productImageIndex[product.id] || 0;
+                                          const newIndex = (currentIndex + 1) % product.images.length;
+                                          setProductImageIndex(prev => ({ ...prev, [product.id]: newIndex }));
+                                        }}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                        aria-label="Next image"
+                                      >
+                                        <ChevronRight className="h-4 w-4" />
+                                      </button>
+                                      
+                                      {/* Image Indicators */}
+                                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                        {product.images.map((_: string, idx: number) => (
+                                          <div
+                                            key={idx}
+                                            className={`h-1.5 rounded-full transition-all ${
+                                              idx === (productImageIndex[product.id] || 0) ? 'bg-white w-6' : 'bg-white/50 w-1.5'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                      
+                                      {/* All Images Thumbnail Strip */}
+                                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                                        <div className="flex gap-1.5 justify-center overflow-x-auto">
+                                          {product.images.map((img: string, idx: number) => (
+                                            <button
+                                              key={idx}
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setProductImageIndex(prev => ({ ...prev, [product.id]: idx }));
+                                              }}
+                                              className={`flex-shrink-0 w-10 h-10 rounded border-2 overflow-hidden grayscale ${
+                                                idx === (productImageIndex[product.id] || 0) 
+                                                  ? 'border-white shadow-lg scale-110' 
+                                                  : 'border-white/50 opacity-70 hover:opacity-100'
+                                              } transition-all`}
+                                            >
+                                              <img
+                                                src={img}
+                                                alt={`${product.name} ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 grayscale">
+                                <Camera className="h-8 w-8 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium z-10">
                               Out of Stock
                             </div>
+                            {/* Edit Image Button - Always Visible */}
+                            <button
+                              onClick={() => handleEditProductImages(product)}
+                              className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 z-10"
+                              title="Edit Images"
+                            >
+                              <Camera className="h-4 w-4" />
+                            </button>
                           </div>
                           
                           <h4 className="font-semibold text-gray-700 mb-2">{product.name}</h4>
@@ -364,6 +760,15 @@ const HustlerProfile: React.FC = () => {
               <h3 className="text-lg font-semibold mb-4">Get in Touch</h3>
               
               <div className="space-y-4">
+                {/* Dashboard Link - Only shown to profile owner or if you know the ID */}
+                <Link
+                  to={`/dashboard/${hustler.id}`}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  <span>View My Dashboard</span>
+                </Link>
+
                 <a
                   href={`https://wa.me/${hustler.whatsapp.replace('+', '')}`}
                   target="_blank"
@@ -374,13 +779,6 @@ const HustlerProfile: React.FC = () => {
                   <span>WhatsApp</span>
                 </a>
                 
-                <button
-                  onClick={() => setShowBookingForm(true)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                  <span>Send Message</span>
-                </button>
               </div>
 
               <div className="mt-6 pt-6 border-t">
@@ -398,89 +796,226 @@ const HustlerProfile: React.FC = () => {
           </div>
         </div>
 
-        {/* Booking Modal */}
-        {showBookingForm && (
+        {/* Edit Product Images Modal */}
+        {showProductImageModal && editingProductImage && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-8 w-full max-w-md"
-            >
-              <h3 className="text-2xl font-bold mb-6">Send a Message</h3>
-              <form onSubmit={handleBookingSubmit} className="space-y-4">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    required
-                    value={bookingData.name}
-                    onChange={(e) => setBookingData({ ...bookingData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  <h3 className="text-2xl font-bold">Edit Product Images</h3>
+                  <p className="text-sm text-gray-600 mt-1">{editingProductImage.name}</p>
                 </div>
-                
+                <button
+                  onClick={() => {
+                    setShowProductImageModal(false);
+                    setEditingProductImage(null);
+                    setProductImageUpdates([]);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Current Images Preview */}
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Product Images ({productImageUpdates.length})
                   </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    required
-                    value={bookingData.phone}
-                    onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    {productImageUpdates.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50">
+                          {image.startsWith('data:image') || image.startsWith('http') ? (
+                            <img
+                              src={image}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = 'https://via.placeholder.com/150';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <Camera className="h-8 w-8" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Delete Image Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductImageUpdates(productImageUpdates.filter((_, i) => i !== index));
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          title="Delete image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Add Image Button */}
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                      <div className="text-center">
+                        <Upload className="h-6 w-6 text-gray-400 mx-auto mb-1" />
+                        <span className="text-xs text-gray-500">Add</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProductImageUpload}
+                      />
+                    </label>
+                  </div>
                 </div>
 
+                {/* Upload via URL */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email (Optional)
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Or Add Image URL
                   </label>
                   <input
-                    type="email"
-                    id="email"
-                    value={bookingData.email}
-                    onChange={(e) => setBookingData({ ...bookingData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    type="url"
+                    placeholder="Paste image URL here (e.g., https://example.com/image.jpg)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    onBlur={(e) => {
+                      const url = e.target.value.trim();
+                      if (url) {
+                        setProductImageUpdates([...productImageUpdates, url]);
+                        e.target.value = '';
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const target = e.target as HTMLInputElement;
+                        const url = target.value.trim();
+                        if (url) {
+                          setProductImageUpdates([...productImageUpdates, url]);
+                          target.value = '';
+                        }
+                      }
+                    }}
                   />
+                  <p className="text-xs text-gray-500 mt-2">Press Enter or click outside to add URL</p>
                 </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={4}
-                    value={bookingData.message}
-                    onChange={(e) => setBookingData({ ...bookingData, message: e.target.value })}
-                    placeholder="Describe what you need..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
+                {productImageUpdates.length === 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 text-center">
+                      💡 Add at least one image to showcase your product!
+                    </p>
+                  </div>
+                )}
 
-                <div className="flex space-x-4">
+                {/* Actions */}
+                <div className="flex gap-3 pt-4 border-t">
                   <button
-                    type="button"
-                    onClick={() => setShowBookingForm(false)}
-                    className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                    onClick={() => {
+                      setShowProductImageModal(false);
+                      setEditingProductImage(null);
+                      setProductImageUpdates([]);
+                    }}
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
                   >
                     Cancel
                   </button>
                   <button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
+                    onClick={handleSaveProductImages}
+                    disabled={productImageUpdates.length === 0 || isUploadingImage}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
-                    <Send className="h-4 w-4" />
-                    <span>Send</span>
+                    {isUploadingImage ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Edit Profile Image Modal */}
+        {showEditImageModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold">Edit Profile Picture</h3>
+                <button
+                  onClick={() => {
+                    setShowEditImageModal(false);
+                    setNewProfileImage('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Preview */}
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center overflow-hidden shadow-lg border-4 border-purple-200">
+                      {newProfileImage ? (
+                        <img
+                          src={newProfileImage}
+                          alt="Profile preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Camera className="w-16 h-16 text-white" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload Button */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Choose New Image
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center px-6 py-3 border-2 border-purple-300 text-purple-700 rounded-xl hover:bg-purple-50 transition-colors font-medium w-full justify-center">
+                    <Camera className="h-5 w-5 mr-2" />
+                    Select Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    JPG, PNG, or GIF (max 5MB)
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowEditImageModal(false);
+                      setNewProfileImage('');
+                    }}
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveProfileImage}
+                    disabled={!newProfileImage || isUploadingImage}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  >
+                    {isUploadingImage ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

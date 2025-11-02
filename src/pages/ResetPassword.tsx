@@ -4,7 +4,7 @@ import { Lock, Eye, EyeOff, CheckCircle, Heart } from 'lucide-react';
 import { useNotifications } from '../components/Notification';
 
 const ResetPassword: React.FC = () => {
-  const { showSuccess, showError, NotificationContainer } = useNotifications();
+  const { showSuccess, showError } = useNotifications();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     password: '',
@@ -145,7 +145,6 @@ const ResetPassword: React.FC = () => {
             </Link>
           </div>
         </div>
-        <NotificationContainer />
       </div>
     );
   }

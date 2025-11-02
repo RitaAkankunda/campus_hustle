@@ -1,19 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { categories } from '../../data/cleanMockData';
 
-// Map category IDs to relevant service images
-const categoryImages: { [key: string]: string } = {
-  '1': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&h=400&fit=crop', // Beauty & Hair - Hair styling
-  '2': 'https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=500&h=400&fit=crop', // Tech & Design - Laptop/coding
-  '3': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop', // Snacks & Treats - Snacks and drinks
-  '4': 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=500&h=400&fit=crop', // Events & Photography - Camera/photography
-  '5': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&h=400&fit=crop', // Academics - Books and studying
-  '6': 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=400&fit=crop', // Totebag & Accessories - Fashion accessories
-};
-
 const CategoriesSection: React.FC = () => {
+  const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: string]: number }>({});
+
+  // Initialize image indices
+  useEffect(() => {
+    const indices: { [key: string]: number } = {};
+    categories.forEach(category => {
+      if (category.images && category.images.length > 0) {
+        indices[category.id] = 0;
+      }
+    });
+    setCurrentImageIndex(indices);
+  }, []);
+
+  const handleImageChange = (categoryId: string, direction: 'prev' | 'next', e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const category = categories.find(c => c.id === categoryId);
+    if (!category?.images || category.images.length === 0) return;
+
+    setCurrentImageIndex(prev => {
+      const currentIndex = prev[categoryId] || 0;
+      let newIndex;
+      
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % category.images.length;
+      } else {
+        newIndex = (currentIndex - 1 + category.images.length) % category.images.length;
+      }
+      
+      return { ...prev, [categoryId]: newIndex };
+    });
+  };
+
+  // Auto-rotate images every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      categories.forEach(category => {
+        if (category.images && category.images.length > 1) {
+          setCurrentImageIndex(prev => {
+            const currentIndex = prev[category.id] || 0;
+            const newIndex = (currentIndex + 1) % category.images.length;
+            return { ...prev, [category.id]: newIndex };
+          });
+        }
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="py-20 bg-gradient-to-br from-white via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +72,10 @@ const CategoriesSection: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {categories.map((category, index) => {
-            const categoryImage = categoryImages[category.id] || categoryImages['1'];
+            const images = category.images || [];
+            const currentIndex = currentImageIndex[category.id] || 0;
+            const displayedImage = images[currentIndex] || 'https://via.placeholder.com/500x400?text=No+Image';
+            const hasMultipleImages = images.length > 1;
             
             return (
               <Link
@@ -39,13 +83,46 @@ const CategoriesSection: React.FC = () => {
                 to={`/category/${category.id}`}
                 className="group relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
               >
-                {/* Background Image */}
+                {/* Background Image with Carousel */}
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={categoryImage}
+                    src={displayedImage}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
+                  
+                  {/* Image Navigation Buttons */}
+                  {hasMultipleImages && (
+                    <>
+                      <button
+                        onClick={(e) => handleImageChange(category.id, 'prev', e)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleImageChange(category.id, 'next', e)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        aria-label="Next image"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      
+                      {/* Image Indicators */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                        {images.map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={`h-1.5 rounded-full transition-all ${
+                              idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 w-1.5'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  
                   {/* Overlay gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent`}></div>
                   <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-20 group-hover:opacity-40 transition-opacity duration-500`}></div>

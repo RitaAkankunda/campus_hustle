@@ -2,7 +2,7 @@ import React from 'react';
 import { useNotifications } from '../components/Notification';
 
 const NotificationTest: React.FC = () => {
-  const { showSuccess, showError, showInfo, showWarning, NotificationContainer } = useNotifications();
+  const { showSuccess, showError, showInfo, showWarning } = useNotifications();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -73,7 +73,6 @@ const NotificationTest: React.FC = () => {
           </div>
         </div>
         
-        <NotificationContainer />
       </div>
     </div>
   );

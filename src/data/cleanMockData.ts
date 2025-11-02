@@ -6,234 +6,78 @@ export const categories: Category[] = [
     name: 'Beauty & Hair',
     icon: '💇‍♀️',
     color: 'from-purple-500 to-indigo-500',
-    count: 2
+    count: 2,
+    images: [
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&h=400&fit=crop'
+    ]
   },
   {
     id: '2',
     name: 'Tech & Design',
     icon: '💻',
     color: 'from-blue-500 to-cyan-500',
-    count: 0
+    count: 0,
+    images: [
+      'https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=400&fit=crop'
+    ]
   },
   {
     id: '3',
     name: 'Snacks & Treats',
     icon: '�',
     color: 'from-teal-500 to-blue-500',
-    count: 1
+    count: 1,
+    images: [
+      'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?w=500&h=400&fit=crop'
+    ]
   },
   {
     id: '4',
     name: 'Events & Photography',
     icon: '📸',
     color: 'from-indigo-500 to-purple-500',
-    count: 0
+    count: 0,
+    images: [
+      'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=500&h=400&fit=crop'
+    ]
   },
   {
     id: '5',
     name: 'Academics',
     icon: '📚',
     color: 'from-blue-600 to-purple-600',
-    count: 0
+    count: 0,
+    images: [
+      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&h=400&fit=crop'
+    ]
   },
   {
     id: '6',
     name: 'Totebag & Accessories',
     icon: '👜',
     color: 'from-purple-600 to-blue-600',
-    count: 0
+    count: 0,
+    images: [
+      'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?w=500&h=400&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=500&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=400&fit=crop'
+    ]
   }
 ];
 
-// Sample MSH Entrepreneurs - ready for real Mary Stuart Hall entrepreneurs!
-export const hustlers: Hustler[] = [
-  {
-    id: '1',
-    name: 'Aisha Nakimuli',
-    bio: 'Professional hair braiding specialist with 3+ years experience. Expert in box braids, cornrows, and protective styles.',
-    profileImage: 'https://images.unsplash.com/photo-1560472355-a9a6ea34c729?w=400&h=300&fit=crop&crop=center',
-    services: ['Box Braids', 'Cornrows', 'Protective Styles', 'Hair Extensions'],
-    pricing: 'From 15,000 UGX',
-    whatsapp: '0701234567',
-    rating: 4.9,
-    reviewCount: 150,
-    category: 'Beauty & Hair',
-    location: 'Mary Stuart Hall - Block A',
-    university: 'Makerere University',
-    featured: true,
-    joinedDate: '2024-01-15',
-    portfolio: [],
-    badges: [
-      { id: 'top-rated', label: 'Top Rated', icon: '⭐', description: 'Consistently rated 4.8+ by customers' },
-      { id: 'early-bird', label: 'Early Bird', icon: '🐦', description: 'Joined in the first month' }
-    ],
-    achievements: [
-      { id: '100-sales', title: '100+ Sales', description: 'Completed over 100 sales', date: '2024-06-01' }
-    ],
-    products: [
-      {
-        id: 'p1',
-        name: 'Box Braids - Medium Size',
-        description: 'Beautiful medium-sized box braids that last 6-8 weeks. Perfect protective style for busy students.',
-        price: '25,000 UGX',
-        images: ['https://images.unsplash.com/photo-1560472355-a9a6ea34c729?w=500&h=400&fit=crop'],
-        category: 'Hair Braiding',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p2',
-        name: 'Cornrows with Extensions',
-        description: 'Stylish cornrows with quality extensions. Various patterns available.',
-        price: '20,000 UGX',
-        images: ['https://images.unsplash.com/photo-1594736797933-d0ca2e3a7ad7?w=500&h=400&fit=crop'],
-        category: 'Hair Braiding',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p3',
-        name: 'Hair Extensions - Premium Quality',
-        description: 'High-quality hair extensions in various colors and lengths.',
-        price: '15,000 UGX',
-        images: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&h=400&fit=crop'],
-        category: 'Hair Extensions',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      }
-    ]
-  },
-  {
-    id: '2',
-    name: 'Grace Namugga',
-    bio: 'Professional makeup artist specializing in bridal, event, and photoshoot makeup. Creating stunning looks for every occasion.',
-    profileImage: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop&crop=center',
-    services: ['Bridal Makeup', 'Event Makeup', 'Photoshoot Makeup', 'Makeup Lessons'],
-    pricing: 'From 20,000 UGX',
-    whatsapp: '0789876543',
-    rating: 4.8,
-    reviewCount: 89,
-    category: 'Beauty & Hair',
-    location: 'Mary Stuart Hall - Block C',
-    university: 'Makerere University',
-    featured: true,
-    joinedDate: '2024-02-01',
-    portfolio: [],
-    badges: [
-      { id: 'featured', label: 'Featured', icon: '🌟', description: 'Handpicked by the admin' }
-    ],
-    achievements: [
-      { id: '50-reviews', title: '50+ Reviews', description: 'Received over 50 customer reviews', date: '2024-07-01' }
-    ],
-    products: [
-      {
-        id: 'p4',
-        name: 'Bridal Makeup Package',
-        description: 'Complete bridal makeup including trial session. Perfect for your special day!',
-        price: '80,000 UGX',
-        images: ['https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&h=400&fit=crop'],
-        category: 'Makeup Services',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p5',
-        name: 'Event Makeup',
-        description: 'Professional makeup for parties, graduations, and special events.',
-        price: '35,000 UGX',
-        images: ['https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=500&h=400&fit=crop'],
-        category: 'Makeup Services',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p6',
-        name: 'Makeup Lesson (1-on-1)',
-        description: 'Learn professional makeup techniques in a private session.',
-        price: '25,000 UGX',
-        images: ['https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&h=400&fit=crop'],
-        category: 'Makeup Education',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      }
-    ]
-  },
-  {
-    id: '3',
-    name: 'Joy Mbabazi',
-    bio: 'Snacks and treats supplier for MSH. I bring you fresh packaged snacks, drinks, and treats from trusted suppliers around campus.',
-    profileImage: 'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop&crop=center',
-    services: ['Fresh Snacks', 'Drinks & Beverages', 'Packaged Treats', 'Party Supplies'],
-    pricing: 'From 2,000 UGX',
-    whatsapp: '0756543210',
-    rating: 5.0,
-    reviewCount: 200,
-    category: 'Snacks & Treats',
-    location: 'Mary Stuart Hall - Ground Floor',
-    university: 'Makerere University',
-    featured: true,
-    joinedDate: '2023-12-10',
-    portfolio: [],
-    badges: [
-      { id: 'super-seller', label: 'Super Seller', icon: '🔥', description: 'Top sales in snacks & treats' }
-    ],
-    achievements: [
-      { id: '200-reviews', title: '200+ Reviews', description: 'Received over 200 customer reviews', date: '2024-08-01' }
-    ],
-    products: [
-      {
-        id: 'p7',
-        name: 'Snack Pack (Assorted)',
-        description: 'Mixed snack pack with biscuits, chips, and sweets. Perfect for study sessions!',
-        price: '8,000 UGX',
-        images: ['https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=500&h=400&fit=crop'],
-        category: 'Snacks',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p8',
-        name: 'Fresh Juice (500ml)',
-        description: 'Fresh fruit juices - passion, mango, or mixed fruits. Delivered fresh daily.',
-        price: '3,500 UGX',
-        images: ['https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=500&h=400&fit=crop'],
-        category: 'Beverages',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p9',
-        name: 'Packaged Cookies',
-        description: 'Quality packaged chocolate chip cookies, perfect for snacking.',
-        price: '8,000 UGX',
-        images: ['https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500&h=400&fit=crop'],
-        category: 'Packaged Snacks',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      },
-      {
-        id: 'p10',
-        name: 'Pre-made Sandwiches (3 pieces)',
-        description: 'Fresh pre-made sandwiches with various fillings. Perfect grab-and-go lunch option!',
-        price: '12,000 UGX',
-        images: ['https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&h=400&fit=crop'],
-        category: 'Ready-to-Eat',
-        inStock: true,
-        createdDate: '2024-02-01',
-        updatedDate: '2024-02-01'
-      }
-    ]
-  }
-];
+// Empty array - hustlers should come from the API (http://localhost:4000/api/hustlers)
+// Mock data removed - use the backend API to manage hustlers
+export const hustlers: Hustler[] = [];
 
 export const blogPosts: BlogPost[] = [
   {

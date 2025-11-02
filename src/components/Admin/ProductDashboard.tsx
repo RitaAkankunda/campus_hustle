@@ -11,10 +11,13 @@ import {
   CheckCircle,
   Settings,
   LogOut,
-  User
+  User,
+  X,
+  Upload
 } from 'lucide-react';
 import { Product, Hustler } from '../../types';
 import { useNotifications } from '../Notification';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
 interface ProductDashboardProps {
   hustler: Hustler;
@@ -31,7 +34,7 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
   onAddProduct,
   onDeleteProfile
 }) => {
-  const { showSuccess, showError, showWarning, NotificationContainer } = useNotifications();
+  const { showSuccess, showError, showWarning } = useNotifications();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -114,6 +117,9 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Analytics Dashboard */}
+        <AnalyticsDashboard hustler={hustler} />
+
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -232,12 +238,25 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
                     product.inStock ? 'border-green-200' : 'border-red-200'
                   }`}
                 >
-                  <div className="relative">
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="w-full h-40 object-cover rounded-lg mb-4"
-                    />
+                  <div className="relative group">
+                    {product.images && product.images.length > 0 && product.images[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-40 object-cover rounded-lg mb-4"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-40 bg-gray-200 rounded-lg mb-4 flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <div className="text-center">
+                          <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs text-gray-500">No image</p>
+                        </div>
+                      </div>
+                    )}
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
                       product.inStock 
                         ? 'bg-green-100 text-green-800' 
@@ -391,20 +410,132 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Image URL</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                <p className="text-xs text-gray-500 mb-3">Upload images or use URLs. You can add multiple images.</p>
+                
+                {/* Image Preview Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  {(editingProduct ? editingProduct.images : newProduct.images).filter(img => img).map((image, index) => (
+                    <div key={index} className="relative group">
+                      <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50">
+                        {image.startsWith('data:image') || image.startsWith('http') ? (
+                          <img
+                            src={image}
+                            alt={`Product ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = 'https://via.placeholder.com/150';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Camera className="h-8 w-8" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Delete Image Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentImages = editingProduct ? editingProduct.images : newProduct.images;
+                          const updatedImages = currentImages.filter((_, i) => i !== index);
+                          if (editingProduct) {
+                            setEditingProduct({...editingProduct, images: updatedImages.length ? updatedImages : ['']});
+                          } else {
+                            setNewProduct({...newProduct, images: updatedImages.length ? updatedImages : ['']});
+                          }
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        title="Delete image"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Upload Image Button */}
+                <label className="cursor-pointer inline-flex items-center px-4 py-3 border-2 border-dashed border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium w-full justify-center mb-3">
+                  <Upload className="h-5 w-5 mr-2" />
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // Validate file size (max 5MB)
+                        if (file.size > 5 * 1024 * 1024) {
+                          showError('Image too large', 'Please choose an image smaller than 5MB');
+                          return;
+                        }
+                        
+                        // Convert image to base64
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64String = reader.result as string;
+                          const currentImages = editingProduct ? editingProduct.images : newProduct.images;
+                          const filteredImages = currentImages.filter(img => img);
+                          const updatedImages = [...filteredImages, base64String];
+                          
+                          if (editingProduct) {
+                            setEditingProduct({...editingProduct, images: updatedImages});
+                          } else {
+                            setNewProduct({...newProduct, images: updatedImages});
+                          }
+                        };
+                        reader.onerror = () => {
+                          showError('Upload failed', 'There was an error reading your image. Please try again.');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+
+                {/* URL Input (Alternative) */}
                 <input
                   type="url"
-                  value={editingProduct ? editingProduct.images[0] : newProduct.images[0]}
-                  onChange={(e) => {
-                    if (editingProduct) {
-                      setEditingProduct({...editingProduct, images: [e.target.value]});
-                    } else {
-                      setNewProduct({...newProduct, images: [e.target.value]});
+                  placeholder="Or paste image URL here (e.g., https://example.com/image.jpg)"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+                  onBlur={(e) => {
+                    const url = e.target.value.trim();
+                    if (url) {
+                      const currentImages = editingProduct ? editingProduct.images : newProduct.images;
+                      const filteredImages = currentImages.filter(img => img && !img.startsWith('data:'));
+                      const updatedImages = [...filteredImages, url];
+                      
+                      if (editingProduct) {
+                        setEditingProduct({...editingProduct, images: updatedImages});
+                      } else {
+                        setNewProduct({...newProduct, images: updatedImages});
+                      }
+                      e.target.value = ''; // Clear input after adding
                     }
                   }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="https://example.com/image.jpg"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const target = e.target as HTMLInputElement;
+                      const url = target.value.trim();
+                      if (url) {
+                        const currentImages = editingProduct ? editingProduct.images : newProduct.images;
+                        const filteredImages = currentImages.filter(img => img && !img.startsWith('data:'));
+                        const updatedImages = [...filteredImages, url];
+                        
+                        if (editingProduct) {
+                          setEditingProduct({...editingProduct, images: updatedImages});
+                        } else {
+                          setNewProduct({...newProduct, images: updatedImages});
+                        }
+                        target.value = ''; // Clear input after adding
+                      }
+                    }
+                  }}
                 />
+                <p className="text-xs text-gray-500 mt-2">Press Enter or click outside to add URL</p>
               </div>
               
               <div className="flex items-center">
@@ -502,7 +633,6 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
           </div>
         </div>
       )}
-      <NotificationContainer />
     </div>
   );
 };
