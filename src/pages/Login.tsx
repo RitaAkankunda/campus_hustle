@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Heart, Sparkles } from 'lucide-react';
 import { useNotifications } from '../components/Notification';
+import { getApiUrl } from '../utils/api';
 
 const Login: React.FC = () => {
-  const { showSuccess } = useNotifications();
+  const { showSuccess, showError } = useNotifications();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -23,16 +25,50 @@ const Login: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      showSuccess(
-        'Welcome back! 👋',
-        'You have successfully signed in to MSH Connect.',
-        4000
+    try {
+      const res = await fetch(getApiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Login failed' }));
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        showSuccess(
+          'Welcome back! 👋',
+          'You have successfully signed in to MSH Connect.',
+          4000
+        );
+        // Store authentication token and user data
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('currentHustlerId', data.hustler.id);
+        localStorage.setItem('currentUser', JSON.stringify(data.hustler));
+        setTimeout(() => {
+          navigate(`/dashboard/${data.hustler.id}`);
+        }, 1500);
+      } else {
+        showError(
+          'Login Failed',
+          data.error || 'Invalid email or password. Please try again.',
+          5000
+        );
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      showError(
+        'Login Error',
+        'Unable to connect. Please check your connection and try again.',
+        5000
       );
-      // In a real app, you'd handle authentication and redirect
-    }, 1500);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -84,21 +120,16 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                Remember me
-              </label>
-            </div>
-            <Link to="/forgot-password" className="text-sm text-pink-600 hover:text-pink-700 font-medium">
-              Forgot password?
-            </Link>
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              name="remember-me"
+              type="checkbox"
+              className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+              Remember me
+            </label>
           </div>
 
           <button

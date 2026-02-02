@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { categories } from '../data/cleanMockData';
-import { ArrowRight, Users, Sparkles, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getApiUrl } from '../utils/api';
+import { Hustler } from '../types';
 
 const Categories: React.FC = () => {
-  const [hustlers, setHustlers] = useState<any[]>([]);
+  const [hustlers, setHustlers] = useState<Hustler[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: string]: number }>({});
 
@@ -16,7 +17,7 @@ const Categories: React.FC = () => {
         const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
         setHustlers(data);
-      } catch (err) {
+      } catch {
         setHustlers([]);
       } finally {
         setLoading(false);
@@ -76,7 +77,7 @@ const Categories: React.FC = () => {
 
   // Calculate real counts for each category
   const categoriesWithCounts = categories.map(category => {
-    const categoryHustlers = hustlers.filter((h: any) => h.category === category.name);
+    const categoryHustlers = hustlers.filter((h: Hustler) => h.category === category.name);
     return {
       ...category,
       count: categoryHustlers.length,

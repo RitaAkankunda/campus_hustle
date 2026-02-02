@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, AlertCircle, X, Info, AlertTriangle } from 'lucide-react';
 
 
@@ -33,15 +33,15 @@ const Notification: React.FC<NotificationProps> = ({
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration]);
+  }, [duration, handleClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsLeaving(true);
     setTimeout(() => {
       setIsVisible(false);
       onClose(id);
     }, 300);
-  };
+  }, [onClose, id]);
 
   if (!isVisible) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface EarningsData {
   totalEarnings: number;
@@ -22,12 +22,7 @@ interface Subscription {
 
 interface HustlerData {
   id: number;
-  name:                         { id: 'users', name: 'MSH Entrepreneurs', icon: '👩‍🎓' },                 { id: 'users', name: 'MSH Entrepreneurs', icon: '👩‍🎓' },        {[
-                  { id: 'overview', name: 'Overview', icon: '📊' },
-                  { id: 'users', name: 'MSH Entrepreneurs', icon: '👩‍🎓' },
-                  { id: 'transactions', name: 'Transactions', icon: '💳' },
-                  { id: 'settings', name: 'Settings', icon: '⚙️' }
-                ].map((tab) => (g;
+  name: string;
   email: string;
   phone: string;
   skill: string;
@@ -54,9 +49,9 @@ const AdminDashboard: React.FC = () => {
   // Load all data from localStorage
   useEffect(() => {
     loadAdminData();
-  }, []);
+  }, [loadAdminData]);
 
-  const loadAdminData = () => {
+  const loadAdminData = useCallback(() => {
     try {
       // Load earnings data
       const savedEarnings = localStorage.getItem('adminEarningsData');
@@ -70,11 +65,11 @@ const AdminDashboard: React.FC = () => {
         const data = JSON.parse(platformEarnings);
         setEarnings(prev => ({
           ...prev,
-          totalEarnings: data.totalSubscriptions || earnings.totalEarnings,
-          monthlyEarnings: data.monthlySubscriptions || earnings.monthlyEarnings,
-          subscriptionEarnings: data.totalSubscriptions || earnings.subscriptionEarnings,
-          activeSubscriptions: data.activeSubscribers || earnings.activeSubscriptions,
-          transactionCount: data.totalTransactions || earnings.transactionCount
+          totalEarnings: data.totalSubscriptions || prev.totalEarnings,
+          monthlyEarnings: data.monthlySubscriptions || prev.monthlyEarnings,
+          subscriptionEarnings: data.totalSubscriptions || prev.subscriptionEarnings,
+          activeSubscriptions: data.activeSubscribers || prev.activeSubscriptions,
+          transactionCount: data.totalTransactions || prev.transactionCount
         }));
       }
 
@@ -82,7 +77,7 @@ const AdminDashboard: React.FC = () => {
       const savedHustlers = localStorage.getItem('campusHustleData');
       if (savedHustlers) {
         const hustlersData = JSON.parse(savedHustlers);
-        const formattedHustlers: HustlerData[] = hustlersData.map((hustler: any, index: number) => ({
+        const formattedHustlers: HustlerData[] = hustlersData.map((hustler: unknown, index: number) => ({
           id: hustler.id || index + 1,
           name: hustler.name || 'Unknown',
           email: hustler.email || 'No email',
@@ -97,7 +92,7 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error loading admin data:', error);
     }
-  };
+  }, []);
 
   // Sample subscriptions data
   useEffect(() => {
@@ -570,7 +565,7 @@ const AdminDashboard: React.FC = () => {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`${
                       activeTab === tab.id
                         ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Lock, Eye, EyeOff, CheckCircle, Heart } from 'lucide-react';
-import { useNotifications } from '../components/Notification';
+import { useNotifications, NotificationContainer } from '../components/Notification';
 
 const ResetPassword: React.FC = () => {
   const { showSuccess, showError } = useNotifications();

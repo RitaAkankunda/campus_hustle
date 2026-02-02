@@ -86,7 +86,7 @@ const Signup: React.FC = () => {
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
 
-  const updateProduct = (productId: string, field: keyof Product, value: any) => {
+  const updateProduct = (productId: string, field: keyof Product, value: string | string[] | boolean) => {
     setProducts(prev => prev.map(product => 
       product.id === productId 
         ? { ...product, [field]: value }

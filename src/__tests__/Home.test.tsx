@@ -21,8 +21,8 @@ describe('Home Page', () => {
       </TestWrapper>
     );
 
-    // Check if MSH Connect heading is present
-    expect(screen.getByText(/MSH Connect/i)).toBeInTheDocument();
+    // Check if main heading is present
+    expect(screen.getByText(/Welcome to the party/i)).toBeInTheDocument();
   });
 
   it('displays the main call-to-action text', () => {

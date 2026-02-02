@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, CheckCircle, Heart } from 'lucide-react';
-import { useNotifications } from '../components/Notification';
+import { useNotifications, NotificationContainer } from '../components/Notification';
 
 const ForgotPassword: React.FC = () => {
   const { showSuccess, showError } = useNotifications();

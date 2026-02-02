@@ -6,34 +6,67 @@ import HustlerCard from '../components/Hustlers/HustlerCard';
 import { useFavorites } from '../hooks/useFavorites';
 import { useNotifications } from '../components/Notification';
 import { getApiUrl } from '../utils/api';
+import { Hustler } from '../types';
 
 const Favorites: React.FC = () => {
   const { favorites, clearFavorites } = useFavorites();
-  const [hustlers, setHustlers] = useState<any[]>([]);
+  const [hustlers, setHustlers] = useState<Hustler[]>([]);
   const [loading, setLoading] = useState(true);
-  const { showSuccess, showError } = useNotifications();
+  const { showSuccess } = useNotifications();
 
+  // Simple fetch on mount and when favorites change
   useEffect(() => {
     const fetchHustlers = async () => {
       try {
+        setLoading(true);
+        
+        // Read favorites directly from localStorage
+        const savedFavorites = localStorage.getItem('campusHustleFavorites');
+        let currentFavorites: string[] = [];
+        
+        if (savedFavorites) {
+          try {
+            currentFavorites = JSON.parse(savedFavorites);
+          } catch (e) {
+            console.error('Error parsing favorites:', e);
+            currentFavorites = [];
+          }
+        }
+        
+        // If no favorites, show empty state immediately
+        if (!currentFavorites || currentFavorites.length === 0) {
+          setHustlers([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch hustlers
         const res = await fetch(getApiUrl('/api/hustlers'));
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
         const data = await res.json();
-        // Filter to only show favorited hustlers
-        const favoritedHustlers = data.filter((h: any) => favorites.includes(h.id));
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid response format');
+        }
+        
+        // Filter favorited hustlers
+        const favoritesSet = new Set(currentFavorites.map(id => String(id)));
+        const favoritedHustlers = data.filter((h: Hustler) => {
+          return favoritesSet.has(String(h.id));
+        });
+        
         setHustlers(favoritedHustlers);
       } catch (err) {
+        console.error('Error fetching favorites:', err);
         setHustlers([]);
       } finally {
         setLoading(false);
       }
     };
     
-    if (favorites.length > 0) {
-      fetchHustlers();
-    } else {
-      setLoading(false);
-    }
-  }, [favorites]);
+    fetchHustlers();
+  }, [favorites.length]);
 
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to remove all favorites?')) {
@@ -93,7 +126,7 @@ const Favorites: React.FC = () => {
         </div>
 
         {/* Favorites Grid */}
-        {favorites.length === 0 ? (
+        {favorites.length === 0 || hustlers.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

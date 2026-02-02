@@ -1,12 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import HustlerCard from '../components/Hustlers/HustlerCard';
 import SearchFilters from '../components/Hustlers/SearchFilters';
 import { getApiUrl } from '../utils/api';
+import { categories } from '../data/cleanMockData';
+import { Hustler, Product } from '../types';
 // import { hustlers } from '../data/cleanMockData';
 
 
 const Hustlers: React.FC = () => {
+  const { id: categoryId } = useParams<{ id?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -14,27 +18,43 @@ const Hustlers: React.FC = () => {
   const [sortBy, setSortBy] = useState('rating');
   const [minRating, setMinRating] = useState<number | undefined>(undefined);
   const [priceRange, setPriceRange] = useState<{ min: string; max: string } | undefined>(undefined);
-  const [hustlers, setHustlers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [hustlers, setHustlers] = useState<Hustler[]>([]);
 
   useEffect(() => {
     const fetchHustlers = async () => {
       try {
         const res = await fetch(getApiUrl('/api/hustlers'));
+        if (!res.ok) {
+          throw new Error(`Failed to fetch hustlers: ${res.status}`);
+        }
         const data = await res.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid response format');
+        }
         setHustlers(data);
-      } catch (err) {
+      } catch (_err) {
         setHustlers([]);
-      } finally {
-        setLoading(false);
       }
     };
     fetchHustlers();
   }, []);
 
+  // Set category filter from URL parameter
+  useEffect(() => {
+    if (categoryId) {
+      const category = categories.find(c => c.id === categoryId);
+      if (category) {
+        setSelectedCategory(category.name);
+      }
+    } else {
+      // If no category ID in URL, clear the filter
+      setSelectedCategory('');
+    }
+  }, [categoryId]);
+
   const filteredAndSortedHustlers = useMemo(() => {
     // First, apply filters
-    let filtered = hustlers.filter((hustler: any) => {
+    const filtered = hustlers.filter((hustler: Hustler) => {
       const matchesSearch = searchQuery === '' ||
         hustler.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hustler.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,7 +69,7 @@ const Hustlers: React.FC = () => {
 
       // Price range filter (check if any product matches)
       const matchesPrice = !priceRange || (priceRange.min === '' && priceRange.max === '') ||
-        (hustler.products || []).some((product: any) => {
+        (hustler.products || []).some((_product: Product) => {
           const priceMatch = true; // Price parsing would be more complex, simplified for now
           return priceMatch;
         });
@@ -58,7 +78,7 @@ const Hustlers: React.FC = () => {
     });
 
     // Then, apply sorting
-    const sorted = [...filtered].sort((a: any, b: any) => {
+    const sorted = [...filtered].sort((a: Hustler, b: Hustler) => {
       switch (sortBy) {
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
@@ -77,15 +97,23 @@ const Hustlers: React.FC = () => {
   }, [hustlers, searchQuery, selectedCategory, selectedLocation, selectedUniversity, sortBy, minRating, priceRange]);
 
   // Featured hustlers (promotions)
-  const featuredHustlers = hustlers.filter((h: any) => h.featured);
+  const featuredHustlers = hustlers.filter((h: Hustler) => h.featured);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Mary Stuart Hall Entrepreneurs 🌸</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {selectedCategory 
+              ? `${selectedCategory} - MSH Entrepreneurs 🌸`
+              : 'Mary Stuart Hall Entrepreneurs 🌸'
+            }
+          </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover amazing talented ladies in Mary Stuart Hall offering exceptional services
+            {selectedCategory
+              ? `Discover talented entrepreneurs in Mary Stuart Hall offering ${selectedCategory.toLowerCase()} services`
+              : 'Discover amazing talented ladies in Mary Stuart Hall offering exceptional services'
+            }
           </p>
         </div>
 

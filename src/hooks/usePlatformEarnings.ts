@@ -25,16 +25,12 @@ export interface SubscriptionPayment {
   status: 'active' | 'expired' | 'cancelled';
 }
 
-export interface PlatformEarnings {
+export interface EntrepreneurStats {
+  entrepreneurId: number;
+  entrepreneurName: string;
   totalCommissions: number;
-  totalSubscriptions: number;
-  totalAdvertising: number;
-  monthlyCommissions: number;
-  monthlySubscriptions: number;
-  monthlyAdvertising: number;
   transactionCount: number;
-  activeSubscribers: number;
-  lastUpdated: string;
+  averageOrderValue: number;
 }
 
 // Hook for managing platform earnings (ADMIN ONLY)
@@ -189,13 +185,13 @@ export const usePlatformEarnings = () => {
       acc[transaction.entrepreneurId].transactionCount += 1;
       
       return acc;
-    }, {} as Record<number, any>);
+    }, {} as Record<number, Omit<EntrepreneurStats, 'averageOrderValue'>>);
 
     return Object.values(entrepreneurStats)
-      .map((stat: any) => ({
+      .map((stat: Omit<EntrepreneurStats, 'averageOrderValue'>) => ({
         ...stat,
         averageOrderValue: stat.totalCommissions / stat.transactionCount || 0
-      }))
+      } as EntrepreneurStats))
       .sort((a, b) => b.totalCommissions - a.totalCommissions)
       .slice(0, limit);
   };

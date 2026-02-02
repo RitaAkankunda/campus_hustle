@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { defaultSEOProps } from './SEOConstants';
 
 interface SEOProps {
   title?: string;
@@ -11,12 +12,12 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'Campus Hustle - Mary Stuart Hall Marketplace',
-  description = 'Connect with talented entrepreneurs at Mary Stuart Hall, Makerere University. Find amazing services from hair braiding to tech solutions, all within your hall community.',
-  keywords = 'Mary Stuart Hall, Makerere University, student entrepreneurs, campus marketplace, hair braiding, tech services, academic support, MSH',
-  image = '/og-image.jpg',
-  url = typeof window !== 'undefined' ? window.location.href : '',
-  type = 'website'
+  title = defaultSEOProps.title,
+  description = defaultSEOProps.description,
+  keywords = defaultSEOProps.keywords,
+  image = defaultSEOProps.image,
+  url = defaultSEOProps.url,
+  type = defaultSEOProps.type
 }) => {
   return (
     <Helmet>
@@ -83,4 +84,4 @@ const SEO: React.FC<SEOProps> = ({
   );
 };
 
-export default SEO;
+export default SEO; // eslint-disable-line react-refresh/only-export-components

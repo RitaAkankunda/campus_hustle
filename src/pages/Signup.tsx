@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Camera, ArrowLeft, ArrowRight, Sparkles, Star, Heart, Zap, CheckCircle, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Camera, ArrowLeft, ArrowRight, Sparkles, Star, Heart, Zap, CheckCircle, Upload, X, ChevronLeft, ChevronRight, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { useNotifications } from '../components/Notification';
@@ -30,6 +30,8 @@ const Signup: React.FC = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     whatsapp: '',
     hallBlock: '',
     category: '',
@@ -38,6 +40,8 @@ const Signup: React.FC = () => {
     profilePicture: '',
   });
   const [products, setProducts] = useState<Product[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { showSuccess, showError } = useNotifications();
   const navigate = useNavigate();
 
@@ -131,6 +135,8 @@ const Signup: React.FC = () => {
     
     const hustler = {
       name: formData.fullName,
+      email: formData.email,
+      password: formData.password, // Store password for login
       university: 'Makerere University',
       category: formData.category,
       location: `Mary Stuart Hall - ${formData.hallBlock}`,
@@ -176,7 +182,7 @@ const Signup: React.FC = () => {
       setTimeout(() => {
         navigate(`/hustler/${data.id}`);
       }, 2000);
-    } catch (err) {
+    } catch {
       showError(
         'Oops! Something went wrong',
         'Please try again or contact support if the issue persists.',
@@ -188,7 +194,14 @@ const Signup: React.FC = () => {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.fullName && formData.email && formData.whatsapp && formData.hallBlock;
+        return formData.fullName && 
+               formData.email && 
+               formData.whatsapp && 
+               formData.hallBlock &&
+               formData.password &&
+               formData.password.length >= 8 &&
+               formData.confirmPassword &&
+               formData.password === formData.confirmPassword;
       case 2:
         return formData.category && formData.bio;
       case 3:
@@ -364,6 +377,57 @@ const Signup: React.FC = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="Create a strong password"
+                        required
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="Confirm your password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                    )}
                   </div>
                 </div>
 

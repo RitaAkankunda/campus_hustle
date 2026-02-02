@@ -40,6 +40,12 @@ export default defineConfig({
       // Allow access to files outside the project root
       strict: false,
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     commonjsOptions: {

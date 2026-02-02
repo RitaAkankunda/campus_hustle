@@ -1,13 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import usePWAInstallPrompt from '../../hooks/usePWAInstallPrompt';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Star, Heart } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Star, Heart, LogOut } from 'lucide-react';
 import { useFavorites } from '../../hooks/useFavorites';
+import { useNotifications } from '../Notification';
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { favorites } = useFavorites();
+  const { showSuccess } = useNotifications();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const currentUserId = localStorage.getItem('currentHustlerId');
+      setIsLoggedIn(!!currentUserId);
+    };
+    
+    checkLoginStatus();
+    // Listen for storage changes (in case of logout from another tab)
+    window.addEventListener('storage', checkLoginStatus);
+    return () => window.removeEventListener('storage', checkLoginStatus);
+  }, [location]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentHustlerId');
+    setIsLoggedIn(false);
+    showSuccess(
+      'Logged Out',
+      'You have been successfully logged out.',
+      3000
+    );
+    navigate('/');
+  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -71,18 +99,31 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            <Link
-              to="/login"
-              className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium"
-            >
-              Join the Community
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium"
+                >
+                  Join the Community
+                </Link>
+              </>
+            )}
             {isSupported && (
               <button
                 onClick={promptInstall}
@@ -134,20 +175,35 @@ const Header: React.FC = () => {
                   </span>
                 )}
               </Link>
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors text-center"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/signup"
-                onClick={() => setIsOpen(false)}
-                className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium text-center"
-              >
-                Join the Community
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    handleLogout();
+                  }}
+                  className="flex items-center justify-center gap-2 text-gray-600 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors text-center w-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors text-center"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsOpen(false)}
+                    className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-pink-700 hover:to-purple-700 transition-all duration-300 font-medium text-center"
+                  >
+                    Join the Community
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

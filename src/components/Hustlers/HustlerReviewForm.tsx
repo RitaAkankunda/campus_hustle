@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 
 interface HustlerReviewFormProps {
-  hustlerId: string;
   onSubmit: (review: { name: string; rating: number; comment: string }) => void;
 }
 
-const HustlerReviewForm: React.FC<HustlerReviewFormProps> = ({ hustlerId, onSubmit }) => {
+const HustlerReviewForm: React.FC<HustlerReviewFormProps> = ({ onSubmit }) => {
   const [name, setName] = useState('');
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');

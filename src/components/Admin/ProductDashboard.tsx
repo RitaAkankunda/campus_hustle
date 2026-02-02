@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   Edit3, 
@@ -34,6 +34,7 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
   onAddProduct,
   onDeleteProfile
 }) => {
+  const navigate = useNavigate();
   const { showSuccess, showError, showWarning } = useNotifications();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -230,11 +231,11 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex gap-6 overflow-x-auto pb-4">
               {hustler.products.map((product) => (
                 <div
                   key={product.id}
-                  className={`bg-gray-50 rounded-xl p-4 border-2 ${
+                  className={`flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4 border-2 ${
                     product.inStock ? 'border-green-200' : 'border-red-200'
                   }`}
                 >
@@ -300,7 +301,7 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
           
           <div className="space-y-4">
             <Link
-              to="/edit-profile"
+              to={`/edit-profile?id=${hustler.id}`}
               className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center">
@@ -314,11 +315,35 @@ const ProductDashboard: React.FC<ProductDashboardProps> = ({
             </Link>
             
             <button
+              onClick={() => {
+                localStorage.removeItem('currentHustlerId');
+                showSuccess(
+                  'Logged Out',
+                  'You have been successfully logged out.',
+                  3000
+                );
+                setTimeout(() => {
+                  navigate('/');
+                }, 1000);
+              }}
+              className="flex items-center justify-between w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="flex items-center">
+                <LogOut className="h-5 w-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="font-medium text-gray-900">Logout</p>
+                  <p className="text-sm text-gray-600">Sign out of your account</p>
+                </div>
+              </div>
+              <LogOut className="h-5 w-5 text-gray-400" />
+            </button>
+            
+            <button
               onClick={() => setShowProfileDeleteConfirm(true)}
               className="flex items-center justify-between w-full p-4 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-left"
             >
               <div className="flex items-center">
-                <LogOut className="h-5 w-5 text-red-400 mr-3" />
+                <Trash2 className="h-5 w-5 text-red-400 mr-3" />
                 <div>
                   <p className="font-medium text-red-900">Delete Profile</p>
                   <p className="text-sm text-red-600">Permanently remove your profile and all products</p>

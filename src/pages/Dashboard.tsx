@@ -1,27 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductDashboard from '../components/Admin/ProductDashboard';
-import { rewards } from '../data/mockRewards';
-import Rewards from '../components/Rewards';
-import EventCalendar from '../components/EventCalendar';
-import { Product } from '../types';
+import { Product, Hustler } from '../types';
 import { useNotifications } from '../components/Notification';
-import { getApiUrl } from '../utils/api';
+import { getApiUrl, getAuthHeaders } from '../utils/api';
 
 const Dashboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showError } = useNotifications();
-  const [currentHustler, setCurrentHustler] = useState<any>(null);
+  const [currentHustler, setCurrentHustler] = useState<Hustler | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Check if user is logged in
+  const currentUserId = localStorage.getItem('currentHustlerId');
+  
+  // Redirect to login if not logged in or trying to access someone else's dashboard
+  useEffect(() => {
+    if (!currentUserId) {
+      showError(
+        'Login Required',
+        'Please log in to access your dashboard.',
+        5000
+      );
+      navigate('/login');
+      return;
+    }
+    
+    if (id && String(currentUserId) !== String(id)) {
+      showError(
+        'Access Denied',
+        'You can only access your own dashboard.',
+        5000
+      );
+      navigate(`/dashboard/${currentUserId}`);
+      return;
+    }
+  }, [currentUserId, id, navigate, showError]);
 
   useEffect(() => {
+    // Don't fetch if user is not logged in (will redirect)
+    if (!currentUserId) {
+      setLoading(false);
+      return;
+    }
+    
     const fetchHustler = async () => {
-      if (!id) return;
+      // Use logged-in user's ID if no ID in URL, or verify the ID matches
+      const hustlerId = id || currentUserId;
+      
+      // Ensure user can only access their own dashboard
+      if (id && String(currentUserId) !== String(id)) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         const res = await fetch(getApiUrl('/api/hustlers'));
         const data = await res.json();
-        const found = data.find((h: any) => String(h.id) === String(id));
+        const found = data.find((h: Hustler) => String(h.id) === String(hustlerId));
         if (found) {
           setCurrentHustler(found);
         }
@@ -32,13 +69,13 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchHustler();
-  }, [id]);
+  }, [id, currentUserId]);
 
   const handleUpdateProduct = async (productId: string, updates: Partial<Product>) => {
     if (!currentHustler) return;
     
     try {
-      const updatedProducts = currentHustler.products.map((product: any) =>
+      const updatedProducts = currentHustler.products.map((product: Product) =>
         product.id === productId
           ? { ...product, ...updates }
           : product
@@ -46,7 +83,10 @@ const Dashboard: React.FC = () => {
 
       const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ products: updatedProducts })
       });
 
@@ -63,11 +103,14 @@ const Dashboard: React.FC = () => {
     if (!currentHustler) return;
 
     try {
-      const updatedProducts = currentHustler.products.filter((product: any) => product.id !== productId);
+      const updatedProducts = currentHustler.products.filter((product: Product) => product.id !== productId);
 
       const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ products: updatedProducts })
       });
 
@@ -96,7 +139,10 @@ const Dashboard: React.FC = () => {
 
       const res = await fetch(getApiUrl(`/api/hustlers/${currentHustler.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ products: updatedProducts })
       });
 
@@ -150,17 +196,13 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <>
-      <EventCalendar />
-      <Rewards rewards={rewards} />
-      <ProductDashboard
-        hustler={currentHustler}
-        onUpdateProduct={handleUpdateProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onAddProduct={handleAddProduct}
-        onDeleteProfile={handleDeleteProfile}
-      />
-    </>
+    <ProductDashboard
+      hustler={currentHustler}
+      onUpdateProduct={handleUpdateProduct}
+      onDeleteProduct={handleDeleteProduct}
+      onAddProduct={handleAddProduct}
+      onDeleteProfile={handleDeleteProfile}
+    />
   );
 };
 

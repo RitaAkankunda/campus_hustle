@@ -16,7 +16,7 @@ export interface PaymentRequest {
   phoneNumber: string;
   reference: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PaymentResponse {
@@ -25,7 +25,7 @@ export interface PaymentResponse {
   reference: string;
   status: 'pending' | 'success' | 'failed';
   message: string;
-  rawResponse?: any;
+  rawResponse?: unknown;
 }
 
 export interface AdminPayoutRequest {

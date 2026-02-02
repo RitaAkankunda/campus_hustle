@@ -1,6 +1,5 @@
 import React from 'react';
 import { events, bookings } from '../data/mockEvents';
-import { Event, Booking } from '../types';
 
 // For demo, assume current user is id '1'
 const CURRENT_USER_ID = '1';

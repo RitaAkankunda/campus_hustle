@@ -9,5 +9,17 @@ export const getApiUrl = (path: string = '') => {
   return `${baseUrl}${cleanPath}`;
 };
 
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+export const logout = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('currentHustlerId');
+  localStorage.removeItem('currentUser');
+  window.location.href = '/login';
+};
+
 export default getApiUrl;
 

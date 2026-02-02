@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, MapPin, Home, Filter, Building, ArrowUpDown, DollarSign, Star } from 'lucide-react';
+import { Search, MapPin, Home, Filter, ArrowUpDown, DollarSign, Star } from 'lucide-react';
 import { categories } from '../../data/cleanMockData';
 
 interface SearchFiltersProps {

@@ -3,7 +3,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
-import TestDashboardLink from './components/TestDashboardLink';
 import Home from './pages/Home';
 import Hustlers from './pages/Hustlers';
 import HustlerProfile from './pages/HustlerProfile';
@@ -19,6 +18,8 @@ import Dashboard from './pages/Dashboard';
 import NotificationTest from './pages/NotificationTest';
 import Favorites from './pages/Favorites';
 import AdminDashboard from './pages/AdminDashboard';
+import EditProfile from './pages/EditProfile';
+import NotFound from './pages/NotFound';
 import { NotificationProvider } from './components/Notification/NotificationProvider';
 
 function App() {
@@ -47,10 +48,11 @@ function App() {
                   <Route path="/favorites" element={<Favorites />} />
                   <Route path="/test-notifications" element={<NotificationTest />} />
                   <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/edit-profile" element={<EditProfile />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
               <Footer />
-              <TestDashboardLink />
             </div>
           </Router>
         </NotificationProvider>

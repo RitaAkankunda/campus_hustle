@@ -71,7 +71,7 @@ const CategoriesSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const images = category.images || [];
             const currentIndex = currentImageIndex[category.id] || 0;
             const displayedImage = images[currentIndex] || 'https://via.placeholder.com/500x400?text=No+Image';

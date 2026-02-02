@@ -17,7 +17,7 @@ const SocialShare: React.FC<SocialShareProps> = ({ url, title, text }) => {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch {
         // User cancelled or error
       }
     } else {

@@ -1,7 +1,6 @@
 import React from 'react';
 import SEO from '../components/SEO';
 import HeroSection from '../components/Home/HeroSection';
-import FeaturedHustlers from '../components/Home/FeaturedHustlers';
 import CategoriesSection from '../components/Home/CategoriesSection';
 import TestimonialsSection from '../components/Home/TestimonialsSection';
 
@@ -54,7 +53,6 @@ const Home: React.FC = () => {
       </section>
 
       <CategoriesSection />
-      <FeaturedHustlers />
 
       {/* How It Works Section */}
       <section className="py-16 bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 relative overflow-hidden">

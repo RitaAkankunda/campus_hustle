@@ -1,56 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MapPin, Phone, Calendar, Award, ArrowLeft, Camera, X, Upload, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Star, MapPin, Phone, Calendar, ArrowLeft, Camera, X, Upload, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { testimonials as initialTestimonials } from '../data/cleanMockData';
 import HustlerReviewForm from '../components/Hustlers/HustlerReviewForm';
 import { useNotifications } from '../components/Notification';
-import { getApiUrl } from '../utils/api';
+import { getApiUrl, getAuthHeaders } from '../utils/api';
+import { Hustler, Product, Testimonial } from '../types';
 
 
 const HustlerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [hustler, setHustler] = useState<any>(null);
+  const [hustler, setHustler] = useState<Hustler | null>(null);
   const [loading, setLoading] = useState(true);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditImageModal, setShowEditImageModal] = useState(false);
   const [newProfileImage, setNewProfileImage] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [editingProductImage, setEditingProductImage] = useState<any>(null);
+  const [editingProductImage, setEditingProductImage] = useState<Product | null>(null);
   const [showProductImageModal, setShowProductImageModal] = useState(false);
   const [productImageUpdates, setProductImageUpdates] = useState<string[]>([]);
   const [productImageIndex, setProductImageIndex] = useState<{ [key: string]: number }>({});
   const { showSuccess, showError } = useNotifications();
+  
+  // Check if current user is viewing their own profile
+  const currentUserId = localStorage.getItem('currentHustlerId');
+  const isOwnProfile = useMemo(() => {
+    // Only show dashboard if user is logged in AND viewing their own profile
+    if (!currentUserId) return false;
+    if (!hustler || !hustler.id) return false;
+    return String(currentUserId) === String(hustler.id);
+  }, [currentUserId, hustler]);
 
   useEffect(() => {
     const fetchHustler = async () => {
       setLoading(true);
       try {
         const res = await fetch(getApiUrl('/api/hustlers'));
+        if (!res.ok) {
+          throw new Error(`Failed to fetch hustlers: ${res.status}`);
+        }
         const data = await res.json();
-        const found = data.find((h: any) => String(h.id) === String(id));
-        setHustler(found || null);
+        const found = data.find((h: Hustler) => String(h.id) === String(id));
         
-        // Initialize image indices for all products
-        if (found?.products) {
-          const indices: { [key: string]: number } = {};
-          found.products.forEach((product: any) => {
-            if (product.images && product.images.length > 0) {
-              indices[product.id] = 0;
-            }
-          });
-          setProductImageIndex(indices);
+        if (!found) {
+          showError(
+            'Profile Not Found',
+            'The entrepreneur profile you are looking for does not exist.',
+            5000
+          );
+          setHustler(null);
+        } else {
+          setHustler(found);
+          // Initialize image indices for all products
+          if (found.products) {
+            const indices: { [key: string]: number } = {};
+            found.products.forEach((product: Product) => {
+              if (product.images && product.images.length > 0) {
+                indices[product.id] = 0;
+              }
+            });
+            setProductImageIndex(indices);
+          }
         }
       } catch (err) {
+        console.error('Error fetching hustler:', err);
+        showError(
+          'Error Loading Profile',
+          'Failed to load the entrepreneur profile. Please try again later.',
+          5000
+        );
         setHustler(null);
       } finally {
         setLoading(false);
       }
     };
     fetchHustler();
-  }, [id]);
+  }, [id, showError]);
 
-  const hustlerTestimonials = testimonials.filter((t: any) => t.hustler === hustler?.name);
+  const hustlerTestimonials = testimonials.filter((t: Testimonial) => t.hustler === hustler?.name);
   
   // Handle new review submission
   const handleReviewSubmit = async (review: { name: string; rating: number; comment: string }) => {
@@ -71,7 +99,7 @@ const HustlerProfile: React.FC = () => {
       const newReview = await res.json();
       
       // Update local testimonials
-      setTestimonials((prev: any[]) => [...prev, newReview]);
+      setTestimonials((prev: Testimonial[]) => [...prev, newReview]);
       
       // Refresh hustler data to get updated rating and review count
       const hustlerRes = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`));
@@ -84,7 +112,7 @@ const HustlerProfile: React.FC = () => {
         'Thank you for your feedback. Your review has been posted successfully.',
         5000
       );
-    } catch (err) {
+    } catch (_err) {
       showError(
         'Review Submission Failed',
         'There was a problem submitting your review. Please try again.',
@@ -129,7 +157,10 @@ const HustlerProfile: React.FC = () => {
       
       const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify(updateData)
       });
       
@@ -148,11 +179,11 @@ const HustlerProfile: React.FC = () => {
         'Your profile picture has been updated successfully.',
         5000
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating profile image:', err);
       showError(
         'Update Failed',
-        err.message || 'There was a problem updating your profile image. Please try again.',
+        err instanceof Error ? err.message : 'There was a problem updating your profile image. Please try again.',
         5000
       );
     } finally {
@@ -187,7 +218,7 @@ const HustlerProfile: React.FC = () => {
     
     setIsUploadingImage(true);
     try {
-      const updatedProducts = hustler.products.map((product: any) => {
+      const updatedProducts = hustler.products.map((product: Product) => {
         if (product.id === editingProductImage.id) {
           return {
             ...product,
@@ -199,7 +230,10 @@ const HustlerProfile: React.FC = () => {
 
       const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({
           products: updatedProducts
         })
@@ -220,11 +254,11 @@ const HustlerProfile: React.FC = () => {
         'Your product images have been updated successfully.',
         5000
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating product images:', err);
       showError(
         'Update Failed',
-        err.message || 'There was a problem updating product images. Please try again.',
+        err instanceof Error ? err.message : 'There was a problem updating product images. Please try again.',
         5000
       );
     } finally {
@@ -233,7 +267,7 @@ const HustlerProfile: React.FC = () => {
   };
 
   // Open product image editor
-  const handleEditProductImages = (product: any) => {
+  const handleEditProductImages = (product: Product) => {
     setEditingProductImage(product);
     setProductImageUpdates(product.images && product.images.length > 0 ? [...product.images] : []);
     setShowProductImageModal(true);
@@ -244,13 +278,16 @@ const HustlerProfile: React.FC = () => {
     setShowDeleteConfirm(false);
     try {
       if (!hustler) return;
-      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/hustlers/${hustler.id}`), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
       if (!res.ok) throw new Error('Failed to delete profile');
       showSuccess('Profile Deleted', 'Your profile has been deleted successfully.');
       setTimeout(() => {
         window.location.href = '/hustlers';
       }, 1500);
-    } catch (err) {
+    } catch (_err) {
       showError('Delete Failed', 'There was a problem deleting your profile. Please try again.');
     }
   };
@@ -287,9 +324,9 @@ const HustlerProfile: React.FC = () => {
           Back to Hustlers
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-4xl mx-auto">
           {/* Main Profile Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-8">
             {/* Profile Header */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="relative h-64 bg-gradient-to-r from-purple-600 to-blue-600">
@@ -314,17 +351,19 @@ const HustlerProfile: React.FC = () => {
                           <span className="text-white text-2xl font-bold">{hustler.name.charAt(0).toUpperCase()}</span>
                         </div>
                       )}
-                      {/* Edit Image Button */}
-                      <button
-                        onClick={() => {
-                          setNewProfileImage(hustler.profileImage || '');
-                          setShowEditImageModal(true);
-                        }}
-                        className="absolute bottom-0 right-0 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 transform hover:scale-110"
-                        title="Edit Profile Picture"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </button>
+                      {/* Edit Image Button - Only visible to profile owner */}
+                      {isOwnProfile && (
+                        <button
+                          onClick={() => {
+                            setNewProfileImage(hustler.profileImage || '');
+                            setShowEditImageModal(true);
+                          }}
+                          className="absolute bottom-0 right-0 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 transform hover:scale-110"
+                          title="Edit Profile Picture"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                     {/* Name removed from header for cleaner look */}
                   </div>
@@ -382,15 +421,17 @@ const HustlerProfile: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* Delete Profile Button */}
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold shadow transition-all duration-200"
-              >
-                Delete Profile
-              </button>
-            </div>
+            {/* Delete Profile Button - Only visible to profile owner */}
+            {isOwnProfile && (
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold shadow transition-all duration-200"
+                >
+                  Delete Profile
+                </button>
+              </div>
+            )}
 
             {/* Custom Delete Confirmation Modal */}
             {showDeleteConfirm && (
@@ -419,12 +460,19 @@ const HustlerProfile: React.FC = () => {
             {/* Products */}
             {hustler.products && hustler.products.length > 0 && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-xl font-semibold mb-4">Available Products</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {hustler.products.filter((product: any) => product.inStock).map((product: any) => (
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">Available Products</h3>
+                  <span className="text-sm text-gray-600">{hustler.products.length} {hustler.products.length === 1 ? 'product' : 'products'}</span>
+                </div>
+                <div className="flex gap-6 overflow-x-auto pb-4" style={{ 
+                  scrollbarWidth: 'thin',
+                  WebkitOverflowScrolling: 'touch',
+                  overflowY: 'hidden'
+                }}>
+                  {hustler.products.map((product: Product, index: number) => (
                     <div
-                      key={product.id}
-                      className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-100 hover:shadow-lg transition-all duration-200 hover:scale-105 relative group"
+                      key={product.id || index}
+                      className="flex-shrink-0 w-80 min-w-[320px] bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-100 hover:shadow-lg transition-all duration-200 hover:scale-105 relative group"
                     >
                       <div className="relative mb-4">
                         {product.images && product.images.length > 0 ? (
@@ -519,17 +567,23 @@ const HustlerProfile: React.FC = () => {
                             <Camera className="h-8 w-8 text-gray-400" />
                           </div>
                         )}
-                        <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium z-10">
-                          In Stock
+                        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium z-10 ${
+                          product.inStock 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {product.inStock ? 'In Stock' : 'Out of Stock'}
                         </div>
-                        {/* Edit Image Button - Always Visible */}
-                        <button
-                          onClick={() => handleEditProductImages(product)}
-                          className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 group-hover:opacity-100 z-10"
-                          title="Edit Images"
-                        >
-                          <Camera className="h-4 w-4" />
-                        </button>
+                        {/* Edit Image Button - Only visible to profile owner */}
+                        {isOwnProfile && (
+                          <button
+                            onClick={() => handleEditProductImages(product)}
+                            className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 group-hover:opacity-100 z-10"
+                            title="Edit Images"
+                          >
+                            <Camera className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                       
                       <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
@@ -547,9 +601,9 @@ const HustlerProfile: React.FC = () => {
                         <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
                           <Camera className="h-3 w-3" />
                           <span>
-                            {productImageIndex[product.id] !== undefined 
+                            Image {productImageIndex[product.id] !== undefined 
                               ? `${(productImageIndex[product.id] || 0) + 1} of ${product.images.length}` 
-                              : `${product.images.length} images`}
+                              : `${product.images.length}`}
                           </span>
                         </div>
                       )}
@@ -567,11 +621,11 @@ const HustlerProfile: React.FC = () => {
                   ))}
                 </div>
                 
-                {hustler.products.filter((product: any) => !product.inStock).length > 0 && (
+                {hustler.products.filter((product: Product) => !product.inStock).length > 0 && (
                   <div className="mt-8">
                     <h4 className="text-lg font-semibold mb-4 text-gray-600">Currently Out of Stock</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {hustler.products.filter((product: any) => !product.inStock).map((product: any) => (
+                      {hustler.products.filter((product: Product) => !product.inStock).map((product: Product) => (
                         <div
                           key={product.id}
                           className="bg-gray-50 rounded-xl p-4 border border-gray-200 opacity-75"
@@ -670,14 +724,16 @@ const HustlerProfile: React.FC = () => {
                             <div className="absolute top-2 right-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium z-10">
                               Out of Stock
                             </div>
-                            {/* Edit Image Button - Always Visible */}
-                            <button
-                              onClick={() => handleEditProductImages(product)}
-                              className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 z-10"
-                              title="Edit Images"
-                            >
-                              <Camera className="h-4 w-4" />
-                            </button>
+                            {/* Edit Image Button - Only visible to profile owner */}
+                            {isOwnProfile && (
+                              <button
+                                onClick={() => handleEditProductImages(product)}
+                                className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 opacity-100 z-10"
+                                title="Edit Images"
+                              >
+                                <Camera className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                           
                           <h4 className="font-semibold text-gray-700 mb-2">{product.name}</h4>
@@ -707,6 +763,38 @@ const HustlerProfile: React.FC = () => {
               </div>
             )}
 
+            {/* Get in Touch Section */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Get in Touch</h3>
+              
+              <div className="space-y-4">
+                {/* Dashboard Link - Only shown to the profile owner when logged in */}
+                {(() => {
+                  const loggedInUserId = localStorage.getItem('currentHustlerId');
+                  const viewingOwnProfile = loggedInUserId && hustler && String(loggedInUserId) === String(hustler.id);
+                  return viewingOwnProfile ? (
+                    <Link
+                      to={`/dashboard/${hustler.id}`}
+                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
+                    >
+                      <BarChart3 className="h-5 w-5" />
+                      <span>View My Dashboard</span>
+                    </Link>
+                  ) : null;
+                })()}
+
+                <a
+                  href={`https://wa.me/${hustler.whatsapp.replace('+', '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors font-medium flex items-center justify-center space-x-2"
+                >
+                  <Phone className="h-5 w-5" />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+            </div>
+
             {/* Portfolio */}
             {hustler.portfolio.length > 0 && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -730,7 +818,7 @@ const HustlerProfile: React.FC = () => {
               <HustlerReviewForm hustlerId={hustler.id} onSubmit={handleReviewSubmit} />
               {hustlerTestimonials.length > 0 ? (
                 <div className="space-y-4">
-                  {hustlerTestimonials.map((testimonial: any) => (
+                  {hustlerTestimonials.map((testimonial: Testimonial) => (
                     <div key={testimonial.id} className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
                       <div className="flex items-center justify-between mb-2">
                         <div>
@@ -753,52 +841,10 @@ const HustlerProfile: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Contact Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
-              <h3 className="text-lg font-semibold mb-4">Get in Touch</h3>
-              
-              <div className="space-y-4">
-                {/* Dashboard Link - Only shown to profile owner or if you know the ID */}
-                <Link
-                  to={`/dashboard/${hustler.id}`}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
-                >
-                  <BarChart3 className="h-5 w-5" />
-                  <span>View My Dashboard</span>
-                </Link>
-
-                <a
-                  href={`https://wa.me/${hustler.whatsapp.replace('+', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors font-medium flex items-center justify-center space-x-2"
-                >
-                  <Phone className="h-5 w-5" />
-                  <span>WhatsApp</span>
-                </a>
-                
-              </div>
-
-              <div className="mt-6 pt-6 border-t">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Award className="h-5 w-5 text-purple-600" />
-                  <span className="font-medium">Quick Stats</span>
-                </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>• {hustler.reviewCount} satisfied customers</p>
-                  <p>• {hustler.rating} average rating</p>
-                  <p>• Member since {new Date(hustler.joinedDate).getFullYear()}</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Edit Product Images Modal */}
-        {showProductImageModal && editingProductImage && (
+        {/* Edit Product Images Modal - Only accessible to profile owner */}
+        {isOwnProfile && showProductImageModal && editingProductImage && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
@@ -938,8 +984,8 @@ const HustlerProfile: React.FC = () => {
           </div>
         )}
 
-        {/* Edit Profile Image Modal */}
-        {showEditImageModal && (
+        {/* Edit Profile Image Modal - Only accessible to profile owner */}
+        {isOwnProfile && showEditImageModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl p-8 w-full max-w-md">
               <div className="flex justify-between items-center mb-6">

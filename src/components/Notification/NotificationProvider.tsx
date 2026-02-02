@@ -20,7 +20,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export const useNotifications = () => {
+export const useNotifications = () => { // eslint-disable-line react-refresh/only-export-components
   const context = useContext(NotificationContext);
   if (!context) {
     // Fallback for when context is not available (shouldn't happen, but prevents crashes)
