@@ -1,5 +1,14 @@
 # Campus Hustle - Mary Stuart Hall Marketplace 🏫✨
 
+[![Live Site](https://img.shields.io/badge/Live%20Site-campus--hustle.netlify.app-00C7B7?logo=netlify&logoColor=white)](https://campus-hustle.netlify.app)
+
+Live Demo: https://campus-hustle.netlify.app
+
+## 🔗 Live Deployments
+
+- Frontend (Netlify): https://campus-hustle.netlify.app
+- Backend API (Vercel): https://campushustlebackend.vercel.app
+
 A modern marketplace platform connecting student entrepreneurs at Mary Stuart Hall, Makerere University with their hall community.
 
 ## 🌟 Features
