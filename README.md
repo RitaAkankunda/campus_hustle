@@ -4,6 +4,10 @@
 
 Live Demo: https://campus-hustle.netlify.app
 
+## Overview
+
+I built a full‑stack application using JavaScript and TypeScript. The frontend is a React app (bundled with Vite), and the backend is a Node.js + Express server. The system connects students with campus opportunities via listings and user profiles, with simple application tracking. I focused on user‑centered design, type‑safe code, and clean API contracts. The frontend is deployed to Netlify and the backend to Vercel, which taught me practical lessons in environment management, CORS, and production‑ready builds.
+
 ## 🔗 Live Deployments
 
 - Frontend (Netlify): https://campus-hustle.netlify.app
